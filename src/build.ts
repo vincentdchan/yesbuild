@@ -7,6 +7,7 @@ import {
 	build as esbuild,
 	BuildOptions as EsBuildOptions,
 } from 'esbuild';
+import { green, red } from 'chalk';
 import { testFileDep } from './dependency';
 import { TaskNode, TaskOutput, BuildGraph } from './buildGraph';
 import type { ConfigOptions } from './configProject';
@@ -37,7 +38,7 @@ export async function build(options: BuildOptions) {
   } else {
     const task = graph.tasks.get(taskName);
     if (!task) {
-      console.error(`Task ${taskName} not found!`);
+      console.log(`Task ${red(taskName)} not found!`);
       process.exit(1);
     }
     await runTask(graph, buildDir, task, taskName, ymlPath);
@@ -51,7 +52,7 @@ async function runAllTaks(graph: BuildGraph, buildDir: string, ymlPath: string) 
 }
 
 async function runTask(graph: BuildGraph, buildDir: string, task: TaskNode, taskName: string, ymlPath: string) {
-  console.log(`Running task: ${taskName}`);
+  console.log(`Running task: ${green(taskName)}`);
   const entries: RebuildEntry[] = [];
   let forceRebuild = false;
   try {
