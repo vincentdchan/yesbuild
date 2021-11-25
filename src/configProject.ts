@@ -1,4 +1,3 @@
-import { scanProject } from './scan';
 import { join } from 'path';
 import { Profile, DebugProfile, ReleaseProfile } from './profile';
 
@@ -8,7 +7,7 @@ export interface ConfigOptions {
 	platform: string,
 }
 
-function initializeBuildDir(buildDir: string): Profile[] {
+function initializeProfiles(buildDir: string): Profile[] {
 	const result: Profile[] = [];
 
 	const debugDir = join(buildDir, 'debug');
@@ -20,8 +19,11 @@ function initializeBuildDir(buildDir: string): Profile[] {
 	return result;
 }
 
-export function config(options: ConfigOptions) {
-	const { entry, platform, buildDir } = options;
-	initializeBuildDir(buildDir);
-	scanProject(entry, platform);
+export async function config(options: ConfigOptions) {
+	const { buildDir } = options;
+	const profiles = initializeProfiles(buildDir);
+	// @todo(Vincent Chan): maybe can be parallized?
+	for (const profile of profiles) {
+		await profile.doConfig(options);
+	}
 }
