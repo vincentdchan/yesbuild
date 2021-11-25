@@ -5,9 +5,10 @@ import {
 	OnResolveArgs as EsBuildResolveArgs,
 	Metafile as EsMetaFile,
 } from 'esbuild';
-import { GraphNode, ModuleGraph } from './moduleGraph';
+import { TaskNode, makeTaskOutput } from './buildGraph';
+import { makeFileDep } from './dependency';
 
-function generateScanPlugin(entry: string, graph: ModuleGraph): EsBuildPlugin {
+function generateScanPlugin(entry: string, task: TaskNode): EsBuildPlugin {
 	return {
 		name: 'yesbuild:scan',
 		setup: (build) => {
@@ -19,7 +20,7 @@ function generateScanPlugin(entry: string, graph: ModuleGraph): EsBuildPlugin {
 	};
 }
 
-export async function scanProject(entry: string, outdir: string, platform: string, graph: ModuleGraph) {
+export async function scanProject(entry: string, outdir: string, platform: string, task: TaskNode) {
 	const esBuildOptions: EsBuildOptions = {
 		entryPoints: [entry],
 		bundle: true,
@@ -31,25 +32,25 @@ export async function scanProject(entry: string, outdir: string, platform: strin
 		platform: platform as any,
 		metafile: true,
 		plugins: [
-			generateScanPlugin(entry, graph)
+			generateScanPlugin(entry, task)
 		]
 	};
 
 	const result = await esbuild(esBuildOptions);
 	const metafile = result.metafile!;
-	buildGraphFromEsBuild(metafile, graph);
+	buildGraphFromEsBuild(metafile, task);
 }
 
-function buildGraphFromEsBuild(metafile: EsMetaFile, graph: ModuleGraph) {
+function buildGraphFromEsBuild(metafile: EsMetaFile, task: TaskNode) {
 	const { outputs } = metafile;
 	for (const key of Object.keys(outputs)) {
 		const output = outputs[key];
-		const node = new GraphNode(key);
+		const taskOutput = makeTaskOutput();
 
 		for (const dep of Object.keys(output.inputs)) {
-			node.depsPath.push(dep);
+			taskOutput.deps.push(makeFileDep(dep));
 		}
 
-		graph.addNode(node);
+		task.outputs[key] = taskOutput;
 	}
 }

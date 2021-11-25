@@ -1,66 +1,44 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'js-yaml';
+import { join } from 'path';
+import { RegistryContext }  from './registry';
 import { scanProject } from './scan';
-import { ModuleGraph } from './moduleGraph';
+import { BuildGraph } from './buildGraph';
 import type { ConfigOptions } from './configProject';
 
-export abstract class Profile {
+function mkFilesDir(workDir: string): string {
+	return join(workDir, 'files');
+}
+
+/**
+ * A profile is like a set of configurations
+ * to help user to build.
+ */
+export class Profile {
+
+  private __workDir: string;
+	private __graph: BuildGraph;
 
 	constructor(
-		public readonly name: string,
-		public readonly workDir: string) {
-
-		fs.mkdirSync(this.workDir, { recursive: true });
-		fs.mkdirSync(this.workDir, { recursive: true });
+    public readonly name: string,
+    public readonly path: string,
+    public readonly registry: RegistryContext,
+    public readonly deps: string[]) {
+    this.__graph = new BuildGraph(deps);
 	}
 
-	abstract doConfig(options: ConfigOptions): void;
+  async doConfig(options: ConfigOptions): Promise<void> {
+    const { buildDir, platform, entry } = options;
+    this.__workDir = join(buildDir, this.name);
+    fs.mkdirSync(this.__workDir, { recursive: true });
 
-}
-
-function mkFilesDir(workDir: string): string {
-	return path.join(workDir, 'files');
-}
-
-export class DebugProfile extends Profile {
-
-	private __graph: ModuleGraph = new ModuleGraph();
-
-	constructor(workDir: string) {
-		super('debug', workDir);
-	}
-
-	async doConfig(options: ConfigOptions) {
-		const { entry, platform } = options;
-		const filesDir = mkFilesDir(this.workDir);
-		await scanProject(entry, filesDir, platform, this.__graph);
-		const depsFilePath = path.join(this.workDir, 'yesbuild.yml');
-		await this.dumpGraphToYaml(options, depsFilePath);
-	}
-
-	private async dumpGraphToYaml(options: ConfigOptions, path: string): Promise<any> {
-		const objs: any = {};
-
-		objs["base"] = process.cwd();
-		objs["options"] = options;
-		objs["deps"] = this.__graph.toDepJson();
-
-		const result = yaml.dump(objs);
-
-		return fs.promises.writeFile(path, result);
-	}
-
-}
-
-export class ReleaseProfile extends Profile {
-
-	constructor(workDir: string) {
-		super('release', workDir);
-	}
-
-	doConfig() {
-		// @TODO(Vincent Chan) not implement
-	}
+    const filesDir = mkFilesDir(this.__workDir);
+    const depsFilePath = join(this.__workDir, 'yesbuild.yml');
+    this.__graph.staticPools['basePath'] = process.cwd();
+    this.__graph.staticPools['configOptions'] = options;
+    this.__graph.staticPools['profile'] = this.name;
+    this.registry.executeTaskToCollectDeps(this.__graph, this.__workDir);
+    await scanProject(entry, filesDir, platform, this.__graph.tasks.get('default'));
+    await this.__graph.dumpToYml(depsFilePath);
+  }
 
 }
