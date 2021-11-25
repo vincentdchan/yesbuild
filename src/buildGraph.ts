@@ -20,9 +20,7 @@ export function makeTaskOutput(): TaskOutput {
 
 export interface TaskNode {
   actions: any[],
-  outputs: {
-    [path: string]: TaskOutput;
-  };
+  outputs: string[];
   deps: string[];
 }
 

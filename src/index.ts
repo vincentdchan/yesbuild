@@ -49,6 +49,11 @@ if (result.args.length === 0) {
 }
 
 export * from './hooks';
-export { ActionExecutor } from './actions';
+export {
+  ActionExecutor,
+  ActionExecutorConstructor,
+  registerAction,
+  getAction,
+} from './actions';
 export { TaskCallback, ConfigOptions };
 export default registry;

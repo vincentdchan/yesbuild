@@ -1,6 +1,7 @@
 import { getDependencyBuilder } from './dependency';
 import { join } from 'path';
-import { EsbuildBundleExecutor } from './actions';
+import { EsbuildBundleExecutor, BuildOptions, TypeScriptExecutor } from './actions';
+import type { BuildOptions as TsBuildOptions } from 'typescript';
 
 export function useStatic<T = any>(name: string, defaultValue?: T): T {
   const builder = getDependencyBuilder();
@@ -19,16 +20,18 @@ export function useServeDir(): string {
   return join(buildDir, 'files');
 }
 
-export interface YesBuildOptions {
-  entry: string;
-}
-
-export function useBuild(options: YesBuildOptions): void {
+export function useBuild(options: BuildOptions): void {
   const builder = getDependencyBuilder();
-  const { entry } = options;
-  const actionExecutor = new EsbuildBundleExecutor({
-    entry,
-  });
+  const actionExecutor = new EsbuildBundleExecutor(options);
 
   builder.addAction(actionExecutor);
 }
+
+export function useTypeScript(options: TsBuildOptions): void {
+  const builder = getDependencyBuilder();
+  const executor = new TypeScriptExecutor(options);
+
+  builder.addAction(executor);
+}
+
+export { BuildOptions }

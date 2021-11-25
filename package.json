@@ -5,9 +5,9 @@
   "author": "Vincent Chan <okcdz@diverse.space>",
   "license": "MIT",
   "scripts": {
-    "build": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:esbuild --sourcemap",
+    "build": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:esbuild --external:typescript --sourcemap",
     "build:ts": "tsc --declaration --emitDeclarationOnly --outDir dist src/index.ts",
-    "watch": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:esbuild --sourcemap --watch"
+    "watch": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:esbuild --external:typescript --sourcemap --watch"
   },
   "dependencies": {
     "esbuild": "^0.13.15"
