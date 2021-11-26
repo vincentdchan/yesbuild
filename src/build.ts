@@ -4,16 +4,17 @@ import * as fs from 'fs';
 import { isString, max } from 'lodash-es';
 import { green, red } from 'chalk';
 import { testFileDep } from './dependency';
-import { TaskNode, TaskOutput, BuildGraph } from './buildGraph';
+import { TaskNode, BuildGraph } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
 
 export interface BuildOptions {
 	buildDir: string,
-  task:string,
+  task: string,
+	forceUpdate?: boolean,
 }
 
 export async function build(options: BuildOptions) {
-	const { buildDir, task: taskName } = options;
+	const { buildDir, task: taskName, forceUpdate } = options;
 	const ymlPath = join(buildDir, 'yesbuild.yml');
 	if (!fs.existsSync(ymlPath)) {
 		throw new Error(`yesbuild.yml not found in ${ymlPath}`);
@@ -24,7 +25,7 @@ export async function build(options: BuildOptions) {
 	const graph = BuildGraph.fromJSON(objs);
 
 	const taskOptions: RunTaskOptions = {
-		forceUpdate: false,
+		forceUpdate: Boolean(forceUpdate),
 		ymlPath,
 		workDir: buildDir,
 	}

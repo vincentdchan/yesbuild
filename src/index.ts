@@ -29,10 +29,12 @@ cli
   .option('-t, --task <task>', 'The name of the task to run, use \'*\' to run all', {
     default: 'default',
   })
+  .option('-f, --force', 'Force rebuild')
   .action((builddir, options) => {
     const buildOptions: BuildOptions = {
       buildDir: builddir,
       task: options.task,
+      forceUpdate: options.force,
     };
     build(buildOptions).catch(err => {
       console.error(err);
