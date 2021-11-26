@@ -60,10 +60,9 @@ export class ParallelExecutor extends ActionExecutor {
 
 	async execute(ctx: ExecuteContext) {
     if (isUndefined(ctx.updatedDeps)) {
-      await this.executeAll(ctx);
+      return;
     }
-
-    // TODO
+    await this.executeAll(ctx);
 	}
 
   async executeAll(ctx: ExecuteContext) {
