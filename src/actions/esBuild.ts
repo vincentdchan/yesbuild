@@ -6,13 +6,11 @@ import {
 	BuildOptions as EsBuildOptions,
 	Metafile as EsMetaFile,
 } from 'esbuild';
-import { cyan } from 'chalk';
-import { performance } from 'perf_hooks';
 
 export interface BuildOptions {
-  entry: string,
+	entry: string,
 	platform: string,
-  outdir?: string,
+	outdir?: string,
 	external?: string[],
 }
 
@@ -23,11 +21,11 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 	private __outputs: string[] = [];
 	private __deps: string[] = [];
 
-  public constructor(private options: BuildOptions) {
-    super();
-  }
+	public constructor(private options: BuildOptions) {
+		super();
+	}
 
-  public async execute(ctx: ExecuteContext) {
+	public async execute(ctx: ExecuteContext) {
 		const { entry, platform, external } = this.options;
 		const { workDir } = ctx;
 		const outdir = join(workDir, 'files');
@@ -45,14 +43,10 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 			plugins: []
 		};
 
-		const beginTime = performance.now();
 		const result = await esbuild(esBuildOptions);
 		const metafile = result.metafile!;
 		this.buildGraphFromEsBuild(metafile);
-		const endTime = performance.now();
-		
-		console.log(`Esbuild finished in ${cyan(Math.round(endTime - beginTime))}ms`);
-  }
+	}
 
 	buildGraphFromEsBuild(metafile: EsMetaFile) {
 		const { outputs } = metafile;
@@ -66,17 +60,17 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 		}
 	}
 
-  public getOutputs() {
-    return this.__outputs;
-  }
+	public getOutputs() {
+		return this.__outputs;
+	}
 
 	public getDeps() {
 		return this.__deps;
 	}
 
-  public getParams(): BuildOptions {
-    return this.options;
-  }
+	public getParams(): BuildOptions {
+		return this.options;
+	}
 
 }
 

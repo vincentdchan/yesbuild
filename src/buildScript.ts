@@ -11,6 +11,7 @@ import { makeFileDep } from './dependency';
 import { Profile } from './profile';
 import { isUndefined } from 'lodash-es';
 import registry from './registry';
+import logger  from './logger';
 
 function findProjectPath(): string | null {
 	let currentDir = process.cwd();
@@ -95,7 +96,7 @@ function collectDependenciesByBuildResult(result: EsBuildResult, deps: Set<strin
 export async function loadBuildScript(): Promise<Profile[]> {
 	const buildScriptPath = findBuildScriptPath();
 	if (buildScriptPath.length === 0) {
-		console.log('No build script found.');
+		logger.printIfReadable('No build script found.');
 		return;
 	}
 

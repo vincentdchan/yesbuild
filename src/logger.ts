@@ -1,4 +1,4 @@
-import { isString } from 'lodash-es';
+import { isString, isObjectLike } from 'lodash-es';
 import { performance } from 'perf_hooks';
 
 export enum LogMode {
@@ -50,18 +50,34 @@ export class Logger {
 		process.exit(exitCode);
 	}
 
-	public panic(error: ErrorLog | string) {
+	public mergesOutput(objs: any) {
+		if (isObjectLike(objs)) {
+			return;
+		}
+		const outputs = objs.outputs || [];
+		for (const o of outputs) {
+			this.__output.push(o);
+		}
+		const taskCount = objs.taskCount || 0;
+		this.__taskCounter += taskCount;
+	}
+
+	public error(error: ErrorLog | string) {
 		if (isString(error)) {
 			error = {
 				message: error,
 			};
 		}
 		this.__errors.push(error);
+	}
+
+	public panic(error: ErrorLog | string) {
+		this.error(error);
 		this.printAndExit(1);
 	}
 
 	private __prettyPrint(delta: number) {
-		if (this.__output.length === 0) {
+		if (this.__taskCounter === 0) {
 			console.log();
 			console.log('\ud83c\udf1e Everything is up to date.');
 			console.log();

@@ -5,6 +5,7 @@ import { BuildGraph } from './buildGraph';
 import { runAllTasks, RunTaskOptions } from './build';
 import { green, gray } from 'chalk';
 import type { ConfigOptions } from './configProject';
+import logger from './logger';
 
 /**
  * A profile is like a set of configurations
@@ -25,7 +26,7 @@ export class Profile {
 
   async doConfig(options: ConfigOptions): Promise<void> {
     const scriptFilename = basename(this.path);
-    console.log(`\ud83d\udd28 Geneating project ${green(this.name)} for ${gray(scriptFilename)} ...`);
+    logger.printIfReadable(`\ud83d\udd28 Geneating project ${green(this.name)} for ${gray(scriptFilename)} ...`);
     const { buildDir } = options;
     this.__workDir = join(buildDir, this.name);
     fs.mkdirSync(this.__workDir, { recursive: true });

@@ -65,13 +65,12 @@ export class ParallelExecutor extends ActionExecutor {
 		const tuples = await Promise.all(tasks);
 		for (const [taskName, out] of tuples) {
 			// no output or all of them are whitespaces, ignore them
-			// if (out.length === 0 || /\s+/.test(out)) {
-			// 	console.log(`continue of ${out}`);
-			// 	continue;
-			// }
-			console.log(`Output of ${green(taskName)}:`);
-			console.log(out.length);
-			console.log(out);
+			if (out.length === 0 || /\s+/.test(out)) {
+				console.log(`continue of ${out}`);
+				continue;
+			}
+			const obj = JSON.parse(out);
+			logger.mergesOutput(obj);
 		}
 	}
 
@@ -86,7 +85,7 @@ export class ParallelExecutor extends ActionExecutor {
 			workDir,
 			'-t',
 			taskName,
-			'--no-conclusion',
+			'--log json',
 		];
 
 		const stdout = await forkAsync(__filename, args, {

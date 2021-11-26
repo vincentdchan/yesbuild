@@ -3,6 +3,7 @@ import { config, ConfigOptions } from './configProject';
 import { build, BuildOptions } from './build';
 import registry, { TaskCallback } from './registry';
 import { startServer } from './server';
+import logger, { LogMode } from './logger';
 
 const cli = cac();
 
@@ -28,18 +29,21 @@ cli
     default: 'default',
   })
   .option('-f, --force', 'Force rebuild')
-  .option('--no-conclusion', 'Do not print conclusion')
+  .option('--log <log>', 'Log type')
   .action((builddir, options) => {
     const buildOptions: BuildOptions = {
       buildDir: builddir,
       task: options.task,
       forceUpdate: options.force,
-      conclusion: Boolean(options.conclusion),
     };
-    build(buildOptions).catch(err => {
-      console.error(err);
-      process.exit(1);
-    });
+    if (options.log === 'json') {
+      logger.mode = LogMode.Data;
+    }
+    build(buildOptions)
+      .then(() => logger.printAndExit())
+      .catch(err => {
+        logger.panic(err.toString())
+      });
   })
 
 cli

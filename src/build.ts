@@ -10,7 +10,6 @@ import logger from './logger';
 export interface BuildOptions {
 	buildDir: string,
   task: string,
-  conclusion?: boolean,
 	forceUpdate?: boolean,
 }
 
@@ -104,5 +103,12 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 		const deps = action.getDeps();
 		taskNode.deps = deps;
 		taskNode.outputs = outputs;
+
+		for (const o of outputs) {
+			logger.addOutput({
+				file: o,
+				size: 0,
+			});
+		}
 	}
 }

@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { red } from 'chalk';
 import { testFileDep, testTaskDep } from './dependency';
+import logger from './logger';
 
 const YML_VERSION = '1.0';
 
@@ -282,7 +283,7 @@ export class BuildGraph {
       if (task.deps === '*') {
         collector.addTaskNamesToUpdate([taskName]);
       } else {
-        console.log(`${red('Error')}: Unreconiged deps: ${task.deps}, ignored.`);
+        logger.error(`${red('Error')}: Unreconiged deps: ${task.deps}, ignored.`);
       }
       return;
     }
