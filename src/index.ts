@@ -8,7 +8,9 @@ const cli = cac();
 
 cli
   .command('config', 'Config a dir from entry to build')
-  .option('-o, --outdir <outdir>', 'Output dir')
+  .option('-o, --outdir <outdir>', 'Output dir', {
+    default: 'build',
+  })
   .action((options) => {
     const configOptions: ConfigOptions = {
       buildDir: options.outdir,

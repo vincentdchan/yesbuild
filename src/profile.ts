@@ -38,7 +38,7 @@ export class Profile {
 
 	private async __build(ymlPath: string) {
 		const taskOptions: RunTaskOptions = {
-			forceUpdate: true,
+			forceUpdate: false,
 			ymlPath,
 			workDir: this.__workDir,
 		}

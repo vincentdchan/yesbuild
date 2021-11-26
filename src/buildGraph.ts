@@ -53,7 +53,7 @@ class DependenciesCollector {
     let sources: string[] = this.fileDeps.get(content);
     if (!sources) {
       sources = [];
-      this.fileDeps.set(taskName, sources);
+      this.fileDeps.set(content, sources);
     }
 
     sources.push(taskName);
@@ -304,10 +304,10 @@ export class BuildGraph {
   private __tryCollectTaskDep(collector: DependenciesCollector, taskName: string, depLiteral: string): boolean {
     const testResult = testTaskDep(depLiteral);
     if (isString(testResult)) {
-      if (!collector.isTaskCollected) {
+      if (!collector.isTaskCollected(testResult)) {
         collector.pushTaskDepForTask(taskName, testResult);
         const task = this.tasks.get(testResult);
-        this.__collectTask(collector, taskName, task);
+        this.__collectTask(collector, testResult, task);
       }
       return true;
     }

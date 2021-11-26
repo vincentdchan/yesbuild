@@ -52,6 +52,8 @@ export async function build(options: BuildOptions) {
       console.log();
       return;
     }
+
+		console.log('tasks to rebuild: ', JSON.stringify(tasksToRun));
     for (const taskName of tasksToRun) {
       const task = graph.tasks.get(taskName);
       if (!task) {
