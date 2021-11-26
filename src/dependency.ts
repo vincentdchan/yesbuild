@@ -7,16 +7,27 @@ export function makeFileDep(path: string) {
   return FILE_PREFIX + path;
 }
 
-export function testFileDep(literal: string): string | null {
-  if (!literal.startsWith(FILE_PREFIX)) {
-    return null;
+function makeTestDep(prefix: string): (literal: string) => string | null {
+  return (literal: string) => {
+    if (!literal.startsWith(prefix)) {
+      return null;
+    }
+    return literal.slice(prefix.length);
   }
-  return literal.slice(FILE_PREFIX.length);
 }
 
 export function makeStaticDep(name: string) {
   return 'static://' + name;
 }
+
+const TASK_PREFIX = 'task://';
+
+export function makeTaskDep(path: string) {
+  return TASK_PREFIX + path;
+}
+
+export const testFileDep = makeTestDep(FILE_PREFIX);
+export const testTaskDep = makeTestDep(TASK_PREFIX);
 
 export class DependencyBuilder {
 

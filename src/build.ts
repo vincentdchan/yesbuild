@@ -3,7 +3,7 @@ import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import { isString, max } from 'lodash-es';
 import { green, red } from 'chalk';
-import { testFileDep } from './dependency';
+import { testFileDep, testTaskDep } from './dependency';
 import { TaskNode, BuildGraph } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
 
@@ -56,21 +56,23 @@ export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions) {
 
 async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions) {
   console.log(`Running task: ${green(taskName)}`);
-  const updatedEntries: string[] = [];
+  let updatedEntries: string[] | undefined;
   let { forceUpdate } = options;
 
 	if (!forceUpdate) {
+    updatedEntries = [];
 		try {
 			checkDependenciesUpdate(task, updatedEntries);
 		} catch (err) {
-			console.info('Error occurs, force rebuild');
+			console.log('Error occurs, force rebuild: ');
+      console.log(err);
 			forceUpdate = true;
 		}
 	}
 
 	const { workDir: buildDir } = options;
 
-  if (updatedEntries.length > 0 || forceUpdate) {
+  if ((updatedEntries && updatedEntries.length > 0) || forceUpdate) {
     await rebuild(taskName, task, buildDir, updatedEntries);
   } else {
     console.log('Everything is update to date.');
@@ -89,26 +91,44 @@ function findLatestTimeOfOutput(task: TaskNode): number {
 	return max(times);
 }
 
+function tryTestFile(depLiteral: string, targetMtime: number, updatedEntries: string[]): boolean {
+  let testResult = testFileDep(depLiteral);
+  if (isString(testResult)) {
+    const stat = fs.statSync(testResult);
+    const { mtimeMs } = stat;
+    if (mtimeMs > targetMtime) {
+      updatedEntries.push(testResult);
+    }
+    return true;
+  }
+  return false;
+}
+
+function tryTestTask(depLiteral: string, targetMtime: number, updatedEntries: string[]) {
+  let testResult = testTaskDep(depLiteral);
+  if (isString(testResult)) {
+    return true;
+  }
+  return false;
+}
+
 function checkDependenciesUpdate(task: TaskNode, updatedEntries: string[]) {
   // TODO: check deps
 	const targetMtime = findLatestTimeOfOutput(task);
 
 	for (const depLiteral of task.deps) {
-    let testResult = testFileDep(depLiteral);
-    if (isString(testResult)) {
-      const stat = fs.statSync(testResult);
-      const { mtimeMs } = stat;
-      if (mtimeMs > targetMtime) {
-        updatedEntries.push(testResult);
-      }
+    if (tryTestFile(depLiteral, targetMtime, updatedEntries)) {
+      continue;
+    } else if (tryTestTask(depLiteral, targetMtime, updatedEntries)) {
+      continue;
     } else {
       throw new Error(`Get a new type of depencency: ${depLiteral}, not support yet`);
     }
 	}
 }
 
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, updatedEntries: string[]) {
-	if (updatedEntries.length > 0) {
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, updatedEntries?: string[]) {
+	if (updatedEntries && updatedEntries.length > 0) {
 		console.log(`Rebuild action ${green(taskName)} because of these dependencies changed:`)
 		for (const entry of updatedEntries) {
 			console.log(`  - ${entry}`);
