@@ -2,6 +2,7 @@
 const INTERNAL_ACTIONS = [
   'esbuild',
   'typescript',
+	'parallel',
 ];
 
 export function validateActionName(name: string) {
@@ -11,28 +12,43 @@ export function validateActionName(name: string) {
   }
 }
 
-export interface ActionStore {
-  name: string,
-  params?: any;
-}
-
 export interface ExecuteContext {
 	workDir: string,
+	updatedDeps?: string[],
 }
 
+/**
+ * An ancester of all executors,
+ * an executor defined how yesbuild to execute an action
+ */
 export abstract class ActionExecutor {
 
   abstract execute(ctx: ExecuteContext): Promise<void>
 
+	/**
+	 * Return the outputs files so yesbuild can know what files
+	 * to track, and when to re-execute the action.
+	 */
   getOutputs(): string[] {
     return undefined;
   }
 
+	/**
+	 * Return the dependency literals,
+	 * the action will be executed if dependencies changed.
+	 */
 	getDeps(): string[] {
 		return [];
 	}
 
-  abstract toStore(): ActionStore;
+	/**
+	 * The params is the `config` of this action, and it's persistent.
+	 * It will be stored in the yml file.
+	 * 
+	 * When the action is re-construct, it will be passed form
+	 * the constructor, so the action can be rebuilt.
+	 */
+  getParams(): any | undefined | void {}
 
 }
 

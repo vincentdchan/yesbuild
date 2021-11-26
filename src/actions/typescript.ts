@@ -1,4 +1,4 @@
-import { ActionExecutor, ActionStore, registerAction } from './common'
+import { ActionExecutor, registerAction } from './common';
 import type { BuildOptions as TsBuildOptions } from 'typescript';
 
 export class TypeScriptExecutor extends ActionExecutor {
@@ -13,12 +13,6 @@ export class TypeScriptExecutor extends ActionExecutor {
 		const ts = await import('typescript');
 		console.log('ts', typeof ts);
 	}
-
-  public toStore(): ActionStore {
-    return {
-      name: 'typescript',
-    };
-  }
 
 }
 

@@ -1,5 +1,5 @@
 import { join } from 'path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import { isString, max } from 'lodash-es';
 import { green, red } from 'chalk';
@@ -115,7 +115,8 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, u
 	}
 
 	const executeContext: ExecuteContext = Object.freeze({
-		workDir: buildDir
+		workDir: buildDir,
+		updatedDeps: updatedEntries,
 	});
 
 	for (const rawAction of taskNode.actions) {

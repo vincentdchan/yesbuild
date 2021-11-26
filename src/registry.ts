@@ -1,7 +1,7 @@
 import { useStatic, useBuild } from './hooks';
 import { validateActionName } from './actions';
 import { isUndefined } from 'lodash-es';
-import { BuildGraph, TaskNode, makeTaskNode } from './buildGraph';
+import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
 import { newDependencyBuilder } from './dependency'
 import type { ConfigOptions } from './configProject';
 
@@ -31,6 +31,7 @@ export class RegistryContext {
       const options = useStatic<ConfigOptions>('configOptions');
       useBuild({
         entry: options.entry,
+        platform: 'web',
       });
     });
   }
@@ -68,7 +69,11 @@ export class RegistryContext {
     builder.finalize();
 
     for (const actionExecutor of builder.actions) {
-      const store = actionExecutor.toStore();
+      const params = actionExecutor.getParams();
+      const store: ActionStore = {
+        name: (actionExecutor.constructor as any).actionName,
+        params,
+      }
       validateActionName(store.name);
       taskNode.actions.push(store);
     }

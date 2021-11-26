@@ -4,6 +4,12 @@ import * as yaml from 'js-yaml';
 
 const YML_VERSION = '1.0';
 
+export interface ActionStore {
+  name: string,
+  params?: any;
+}
+
+
 interface StaticPoolMap {
   [path: string]: any;
 }
@@ -19,7 +25,7 @@ export function makeTaskOutput(): TaskOutput {
 }
 
 export interface TaskNode {
-  actions: any[],
+  actions: ActionStore[],
   outputs: string[];
   deps: string[];
 }

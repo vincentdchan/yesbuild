@@ -1,4 +1,4 @@
-import yesbuild, { useBuild, useTypeScript } from './dist';
+import yesbuild, { useBuild, useTypeScript, useParallel } from './dist';
 
 yesbuild.registerTask('tsc', () => {
   useTypeScript({});
@@ -10,4 +10,11 @@ yesbuild.registerTask('default', () => {
     platform: 'node',
     external: ['typescript']
   });
+});
+
+yesbuild.registerTask('parallel', () => {
+  useParallel([
+    'default',
+    'tsc',
+  ]);
 });

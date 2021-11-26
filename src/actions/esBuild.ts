@@ -1,4 +1,4 @@
-import { ActionExecutor, ActionStore, registerAction, ExecuteContext } from './common';
+import { ActionExecutor, registerAction, ExecuteContext } from './common';
 import { join } from 'path';
 import { makeFileDep } from '../dependency';
 import {
@@ -68,11 +68,8 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 		return this.__deps;
 	}
 
-  public toStore(): ActionStore {
-    return {
-      name: 'esbuild',
-      params: this.options,
-    };
+  public getParams(): BuildOptions {
+    return this.options;
   }
 
 }

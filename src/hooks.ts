@@ -1,6 +1,11 @@
 import { getDependencyBuilder } from './dependency';
 import { join } from 'path';
-import { EsbuildBundleExecutor, BuildOptions, TypeScriptExecutor } from './actions';
+import {
+  EsbuildBundleExecutor,
+  BuildOptions,
+  TypeScriptExecutor,
+  ParallelExecutor,
+} from './actions';
 import type { BuildOptions as TsBuildOptions } from 'typescript';
 
 export function useStatic<T = any>(name: string, defaultValue?: T): T {
@@ -30,6 +35,13 @@ export function useBuild(options: BuildOptions): void {
 export function useTypeScript(options: TsBuildOptions): void {
   const builder = getDependencyBuilder();
   const executor = new TypeScriptExecutor(options);
+
+  builder.addAction(executor);
+}
+
+export function useParallel(tasks: string[]): void {
+  const builder = getDependencyBuilder();
+  const executor = new ParallelExecutor(tasks);
 
   builder.addAction(executor);
 }
