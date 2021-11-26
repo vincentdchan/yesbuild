@@ -59,7 +59,7 @@ export class ParallelExecutor extends ActionExecutor {
 	}
 
 	async execute(ctx: ExecuteContext) {
-    if (isUndefined(ctx.updatedDeps)) {
+    if (isUndefined(ctx.updatedDeps) && !ctx.forceUpdate) {
       return;
     }
     await this.executeAll(ctx);
@@ -91,6 +91,7 @@ export class ParallelExecutor extends ActionExecutor {
       '-t',
       taskName,
       '-f',
+      '--no-conclusion',
     ];
 
     const stdout = await forkAsync(__filename, args, {

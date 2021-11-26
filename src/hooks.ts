@@ -5,15 +5,8 @@ import {
   BuildOptions,
   TypeScriptExecutor,
   ParallelExecutor,
+  TypeScriptBuildOptions,
 } from './actions';
-import type { BuildOptions as TsBuildOptions } from 'typescript';
-
-export function useStatic<T = any>(name: string, defaultValue?: T): T {
-  const builder = getDependencyBuilder();
-  builder.addStaticPoolDep(name);
-  const { graph } = builder;
-  return graph.staticPools[name] || defaultValue;
-}
 
 export function useBuildDir(): string {
   const builder = getDependencyBuilder();
@@ -32,7 +25,7 @@ export function useBuild(options: BuildOptions): void {
   builder.addAction(actionExecutor);
 }
 
-export function useTypeScript(options: TsBuildOptions): void {
+export function useTypeScript(options: TypeScriptBuildOptions): void {
   const builder = getDependencyBuilder();
   const executor = new TypeScriptExecutor(options);
 

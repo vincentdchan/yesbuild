@@ -2,19 +2,15 @@ import cac from 'cac';
 import { config, ConfigOptions } from './configProject';
 import { build, BuildOptions } from './build';
 import registry, { TaskCallback } from './registry';
+import { startServer } from './server';
 
 const cli = cac();
 
 cli
-  .command('config <entry>', 'Config a dir from entry to build')
+  .command('config', 'Config a dir from entry to build')
   .option('-o, --outdir <outdir>', 'Output dir')
-  .option('--platform <platform>', 'Platform to bundle: browser|node|neutral', {
-    default: 'browser'
-  })
-  .action((entry, options) => {
+  .action((options) => {
     const configOptions: ConfigOptions = {
-      entry,
-      platform: options.platform,
       buildDir: options.outdir,
     };
 
@@ -30,11 +26,13 @@ cli
     default: 'default',
   })
   .option('-f, --force', 'Force rebuild')
+  .option('--no-conclusion', 'Do not print conclusion')
   .action((builddir, options) => {
     const buildOptions: BuildOptions = {
       buildDir: builddir,
       task: options.task,
       forceUpdate: options.force,
+      conclusion: Boolean(options.conclusion),
     };
     build(buildOptions).catch(err => {
       console.error(err);
@@ -42,13 +40,21 @@ cli
     });
   })
 
+cli
+  .command('serve <builddir>', 'Serve files in building dir')
+  .option('-p, --port <port>', 'The port of the server', {
+    default: 3000,
+  })
+  .action((builddir, options) => {
+    startServer({
+      buildDir: builddir,
+      port: options.port,
+    });
+  })
+
 cli.help();
 
-const result = cli.parse();
-
-if (result.args.length === 0) {
-  cli.outputHelp();
-}
+cli.parse();
 
 export * from './hooks';
 export {

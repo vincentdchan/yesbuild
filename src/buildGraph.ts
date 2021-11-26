@@ -1,4 +1,4 @@
-import { isObjectLike, isString, max } from 'lodash-es';
+import { isObjectLike, isUndefined, isString, max } from 'lodash-es';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { testFileDep, testTaskDep } from './dependency';
@@ -8,10 +8,6 @@ const YML_VERSION = '1.0';
 export interface ActionStore {
   name: string,
   params?: any;
-}
-
-interface StaticPoolMap {
-  [path: string]: any;
 }
 
 export interface TaskOutput {
@@ -100,11 +96,6 @@ function findLatestTimeOfOutput(outputs: string[]): number {
 
 export class BuildGraph {
 
-	/**
-	 * Static Pools is anything static for this Build Procedure,
-	 * can be used as key to the tasks
-	 */
-	public readonly staticPools: StaticPoolMap = Object.create(null);
   public readonly tasks: Map<string, TaskNode> = new Map();
 
 	public static fromJSON(objs: any): BuildGraph {
@@ -112,13 +103,7 @@ export class BuildGraph {
 			throw new Error(`ModuleGraph::fromJSON only received object, but got ${objs}`);
 		}
 
-    const result = new BuildGraph();
-
-		if (!isObjectLike(objs['static'])) {
-			throw new Error(`ModuleGraph::fromJSON objs.deps not found`);
-		}
-
-    Object.assign(result.staticPools, objs['static']);
+    const result = new BuildGraph(objs.deps);
 
     for (const key in objs.tasks) {
       const value = objs.tasks[key];
@@ -132,27 +117,123 @@ export class BuildGraph {
     public readonly deps: string[] = []
   ) {}
 
+  public needsReconfig(ymlPath: string): boolean {
+    const stat = fs.statSync(ymlPath);
+    const { mtimeMs } = stat;
+    return this.__checkDepsForRoot(mtimeMs);
+  }
+
+  private __checkDepsForRoot(mtimeMs: number): boolean {
+    const files: string [] = [];
+    for (const depLiteral of this.deps) {
+      let testResult = testFileDep(depLiteral);
+      if (!isString(testResult)) {
+        throw new Error(`Only file:// dependency is supported for yml, but ${depLiteral} got`);
+      }
+      files.push(testResult);
+    }
+
+    const latestTime = findLatestTimeOfOutput(files);
+    return latestTime > mtimeMs;
+  }
+
   /**
    * Track dependencies from an entry task,
    * telling yesbuild what tasks to rebuild.
    */
-  public checkDependenciesUpdated(entry: string): string[] {
+  public checkDependenciesUpdated(entry: string, forceUpdate: boolean = false): string[] {
     const collector = new DependenciesCollector();
-    const entryTask = this.tasks.get(entry);
-    this.__collectTask(collector, entry, entryTask);
-    this.__checkFilesDeps(collector);
+    if (entry === '*') {
+      const taskNames = [...this.tasks.keys()];
+      collector.addTaskNamesToUpdate(taskNames);
+    } else {
+      const entryTask = this.tasks.get(entry);
+      this.__collectTask(collector, entry, entryTask);
+      if (forceUpdate) {
+        this.__addAllSubTasks(collector, entry);
+      } else {
+        this.__checkFilesDeps(collector);
+      }
+    }
     return this.__computeExecutionOrderOfTasks(
       collector.taskNamesToUpdate,
       collector.taskDeps
     );
   }
 
+  private __addAllSubTasks(collector: DependenciesCollector, entry: string) {
+    const visitedNodes = new Set<string>();
+
+    const names: string[] = [];
+    function visitNode(name: string) {
+      if (visitedNodes.has(name)) {
+        return;
+      }
+      visitedNodes.add(name);
+      names.push(name);
+
+      const children = collector.taskDeps.get(name);
+      if (!children) {
+        return;
+      }
+
+      for (const child of children) {
+        visitNode(child);
+      }
+    }
+
+    visitNode(entry);
+    collector.addTaskNamesToUpdate(names);
+  }
+
   /**
    * All the children tasks should run before the parents run.
    * Computes the right order.
+   * 
+   * Find the free nodes first, free nodes representes the task that depends nothing.
    */
   private __computeExecutionOrderOfTasks(taskNames: Set<string>, taskDeps: Map<string, string[]>): string[] {
     const result: string[] = [];
+    const visitedNodes: Set<string> = new Set();
+
+    let iteratesNode: string[] = [];
+    for (const taskName of taskNames) {
+      const deps = taskDeps.get(taskName);
+      // free nodes
+      if (!deps || deps.length === 0) {
+        result.push(taskName);
+        visitedNodes.add(taskName);
+      } else {
+        iteratesNode.push(taskName);
+      }
+    }
+
+    function isAllDepsSatisfied(deps: string[]) {
+      for (const dep of deps) {
+        if (!visitedNodes.has(dep)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    // graph reduction
+    while (iteratesNode.length > 0) {
+      const nextIteratesNode: string[] = [];
+
+      for (const taskName of iteratesNode) {
+        const deps = taskDeps.get(taskName);
+        if (isAllDepsSatisfied(deps)) {
+          result.push(taskName);
+          visitedNodes.add(taskName);
+        } else {
+          nextIteratesNode.push(taskName);
+        }
+      }
+
+      iteratesNode = nextIteratesNode;
+    }
 
     return result;
   }
@@ -178,6 +259,9 @@ export class BuildGraph {
 
     for (const taskName of taskNames) {
       const task = this.tasks.get(taskName);
+      if (isUndefined(task.outputs)) {
+        continue;
+      }
       for (const output of task.outputs) {
         outputs.push(output);
       }
@@ -189,6 +273,9 @@ export class BuildGraph {
   private __collectTask(collector: DependenciesCollector, taskName: string, task: TaskNode) {
     if (!task) {
       throw new Error(`Can not find task ${taskName}`);
+    }
+    if (isUndefined(task.deps)) {
+      return;
     }
     for (const depLiteral of task.deps) {
       if (this.__tryCollectFileDep(collector, taskName, depLiteral)) {
@@ -230,7 +317,6 @@ export class BuildGraph {
   public async dumpToYml(path: string): Promise<any> {
 		const objs: any = Object.create(null);
     objs['version'] = YML_VERSION;
-    this.dumpStaticPools(objs);
     this.dumpTasks(objs);
     objs['deps'] = this.deps;
 
@@ -247,10 +333,6 @@ export class BuildGraph {
     }
 
     objs["tasks"] = tasks;
-  }
-
-  private dumpStaticPools(objs: any) {
-    objs['static'] = this.staticPools;
   }
 
 }

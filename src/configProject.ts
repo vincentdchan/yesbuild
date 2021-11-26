@@ -1,9 +1,7 @@
 import { loadBuildScript } from './buildScript';
 
 export interface ConfigOptions {
-	entry: string,
 	buildDir: string,
-	platform: string,
 }
 
 export async function config(options: ConfigOptions) {

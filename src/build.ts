@@ -1,20 +1,24 @@
-import { join } from 'path';
+import { join, resolve } from 'path';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
-import { isString, max } from 'lodash-es';
 import { green, red } from 'chalk';
-import { testFileDep, testTaskDep } from './dependency';
+import { performance } from 'perf_hooks';
+import { config, ConfigOptions } from './configProject';
 import { TaskNode, BuildGraph } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
+
+let taskCounter = 0;
 
 export interface BuildOptions {
 	buildDir: string,
   task: string,
+  conclusion?: boolean,
 	forceUpdate?: boolean,
 }
 
 export async function build(options: BuildOptions) {
-	const { buildDir, task: taskName, forceUpdate } = options;
+  const beginTime = performance.now();
+	const { buildDir, task: taskName, conclusion, forceUpdate } = options;
 	const ymlPath = join(buildDir, 'yesbuild.yml');
 	if (!fs.existsSync(ymlPath)) {
 		throw new Error(`yesbuild.yml not found in ${ymlPath}`);
@@ -23,6 +27,14 @@ export async function build(options: BuildOptions) {
 	const content = await fs.promises.readFile(ymlPath, 'utf-8');
 	const objs: any = yaml.load(content);
 	const graph = BuildGraph.fromJSON(objs);
+
+  if (graph.needsReconfig(ymlPath)) {
+    console.log(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
+    const configOptions: ConfigOptions = {
+      buildDir: resolve(buildDir, '..'),
+    };
+    await config(configOptions);
+  }
 
 	const taskOptions: RunTaskOptions = {
 		forceUpdate: Boolean(forceUpdate),
@@ -33,12 +45,27 @@ export async function build(options: BuildOptions) {
   if (taskName === '*') {
     await runAllTasks(graph, taskOptions);
   } else {
-    const task = graph.tasks.get(taskName);
-    if (!task) {
-      console.log(`Task ${red(taskName)} not found!`);
-      process.exit(1);
+    const tasksToRun = graph.checkDependenciesUpdated(taskName, forceUpdate);
+    if (tasksToRun.length === 0) {
+      console.log();
+      console.log('\ud83c\udf1e Everything is up to date.');
+      console.log();
+      return;
     }
-    await runTask(task, taskName, taskOptions);
+    for (const taskName of tasksToRun) {
+      const task = graph.tasks.get(taskName);
+      if (!task) {
+        console.log(`Task ${red(taskName)} not found!`);
+        process.exit(1);
+      }
+      await runTask(task, taskName, taskOptions);
+    }
+  }
+
+  const endTime = performance.now();
+  if (taskCounter > 0 && conclusion) {
+    console.log();
+    console.log(`Totally ${taskCounter} tasks in ${Math.round(endTime - beginTime)}ms.`);
   }
 }
 
@@ -49,85 +76,25 @@ export interface RunTaskOptions {
 }
 
 export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions) {
-  for (const [name, task] of graph.tasks) {
-    await runTask(task, name, options);
+  const { forceUpdate } = options;
+  const orderedTasks: string[] = graph.checkDependenciesUpdated('*', forceUpdate);
+  for (const taskName of orderedTasks) {
+    const task = graph.tasks.get(taskName);
+    await runTask(task, taskName, options);
   }
 }
 
 async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions) {
+  taskCounter++;
   console.log(`Running task: ${green(taskName)}`);
   let updatedEntries: string[] | undefined;
-  let { forceUpdate } = options;
 
-	if (!forceUpdate) {
-    updatedEntries = [];
-		try {
-			checkDependenciesUpdate(task, updatedEntries);
-		} catch (err) {
-			console.log('Error occurs, force rebuild: ');
-      console.log(err);
-			forceUpdate = true;
-		}
-	}
+	const { workDir: buildDir, forceUpdate } = options;
 
-	const { workDir: buildDir } = options;
-
-  if ((updatedEntries && updatedEntries.length > 0) || forceUpdate) {
-    await rebuild(taskName, task, buildDir, updatedEntries);
-  } else {
-    console.log('Everything is update to date.');
-  }
+  await rebuild(taskName, task, buildDir, Boolean(forceUpdate), updatedEntries);
 }
 
-function findLatestTimeOfOutput(task: TaskNode): number {
-	const times: number[] = [];
-
-	for (const output of task.outputs) {
-		const stat = fs.statSync(output);
-		const { mtimeMs } = stat;
-		times.push(mtimeMs);
-	}
-
-	return max(times);
-}
-
-function tryTestFile(depLiteral: string, targetMtime: number, updatedEntries: string[]): boolean {
-  let testResult = testFileDep(depLiteral);
-  if (isString(testResult)) {
-    const stat = fs.statSync(testResult);
-    const { mtimeMs } = stat;
-    if (mtimeMs > targetMtime) {
-      updatedEntries.push(testResult);
-    }
-    return true;
-  }
-  return false;
-}
-
-function tryTestTask(depLiteral: string, targetMtime: number, updatedEntries: string[]) {
-  let testResult = testTaskDep(depLiteral);
-  if (isString(testResult)) {
-    return true;
-  }
-  return false;
-}
-
-function checkDependenciesUpdate(task: TaskNode, updatedEntries: string[]) {
-  // TODO: check deps
-	const targetMtime = findLatestTimeOfOutput(task);
-
-	for (const depLiteral of task.deps) {
-    if (tryTestFile(depLiteral, targetMtime, updatedEntries)) {
-      continue;
-    } else if (tryTestTask(depLiteral, targetMtime, updatedEntries)) {
-      continue;
-    } else {
-      throw new Error(`Get a new type of depencency: ${depLiteral}, not support yet`);
-    }
-	}
-}
-
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, updatedEntries?: string[]) {
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean, updatedEntries?: string[]) {
 	if (updatedEntries && updatedEntries.length > 0) {
 		console.log(`Rebuild action ${green(taskName)} because of these dependencies changed:`)
 		for (const entry of updatedEntries) {
@@ -138,6 +105,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, u
 	const executeContext: ExecuteContext = Object.freeze({
 		workDir: buildDir,
 		updatedDeps: updatedEntries,
+    forceUpdate,
 	});
 
 	for (const rawAction of taskNode.actions) {

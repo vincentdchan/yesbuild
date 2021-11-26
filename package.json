@@ -22,6 +22,7 @@
     "chalk": "^4.1.2",
     "js-yaml": "^4.1.0",
     "lodash-es": "^4.17.21",
+    "tsconfig": "^7.0.0",
     "typescript": "^4.5.2"
   }
 }

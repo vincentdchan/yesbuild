@@ -1,9 +1,7 @@
-import { useStatic, useBuild } from './hooks';
 import { validateActionName } from './actions';
 import { isUndefined } from 'lodash-es';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
 import { newDependencyBuilder } from './dependency'
-import type { ConfigOptions } from './configProject';
 
 export type TaskCallback = () => void | undefined | null | string[];
 
@@ -26,15 +24,7 @@ export class RegistryContext {
 
   private __tasks: Map<string, Task> = new Map();
 
-  public constructor() {
-    this.registerTask('default', () => {
-      const options = useStatic<ConfigOptions>('configOptions');
-      useBuild({
-        entry: options.entry,
-        platform: 'web',
-      });
-    });
-  }
+  public constructor() {}
 
   public registerTask(name: string, callback: TaskCallback) {
     const task: Task = {

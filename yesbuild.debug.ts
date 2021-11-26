@@ -1,10 +1,18 @@
 import yesbuild, { useBuild, useTypeScript, useParallel } from './dist';
 
 yesbuild.registerTask('tsc', () => {
-  useTypeScript({});
+  useTypeScript({
+    entries: [
+      'src/index.ts',
+    ],
+    compilerOptions: {
+      'declaration': true,
+      'emitDeclarationOnly': true,
+    },
+  });
 });
 
-yesbuild.registerTask('default', () => {
+yesbuild.registerTask('esbuild', () => {
   useBuild({
     entry: 'src/index.ts',
     platform: 'node',
@@ -12,9 +20,9 @@ yesbuild.registerTask('default', () => {
   });
 });
 
-yesbuild.registerTask('parallel', () => {
+yesbuild.registerTask('default', () => {
   useParallel([
-    'default',
+    'esbuild',
     'tsc',
   ]);
 });

@@ -1,18 +1,78 @@
-import { ActionExecutor, registerAction } from './common';
-import type { BuildOptions as TsBuildOptions } from 'typescript';
+import { isUndefined } from 'lodash-es';
+import * as path from 'path';
+import { ActionExecutor, registerAction, ExecuteContext } from './common';
+import { makeFileDep } from '../dependency';
+import ts from 'typescript';
+import * as tsconfig from 'tsconfig';
+
+function fileExists(fileName: string) {
+  return ts.sys.fileExists(fileName);
+}
+
+export interface TypeScriptBuildOptions {
+  entries: string[],
+  compilerOptions?: ts.CompilerOptions,
+}
 
 export class TypeScriptExecutor extends ActionExecutor {
 
 	public static actionName: string = 'typescript'
+  private __program: ts.Program;
+  private __config: any;
+  private __deps: string[] = [];
 
-  public constructor(private options: TsBuildOptions) {
+  public constructor(private options: TypeScriptBuildOptions) {
     super();
+    if (isUndefined(options)) {
+      throw new Error(`Internal Error <TypeScriptExecutor>: options is undefined`);
+    }
   }
 
-	async execute() {
-		const ts = await import('typescript');
-		console.log('ts', typeof ts);
+	async execute(ctx: ExecuteContext) {
+    const configFile = ts.findConfigFile(process.cwd(), fileExists);
+    if (!isUndefined(configFile)) {
+      this.__config = tsconfig.readFileSync(configFile);
+      this.__deps.push(makeFileDep(configFile));
+    }
+
+    let options: ts.CompilerOptions = {};
+    if (this.__config && 'compilerOptions' in this.__config) {
+      Object.assign(options, this.__config.compilerOptions);
+    }
+
+    if (this.options.compilerOptions) {
+      Object.assign(options, this.options.compilerOptions);
+    }
+
+    const { entries } = this.options;
+    const { workDir } = ctx;
+
+    this.__program = ts.createProgram({
+      rootNames: entries,
+      options: {
+        ...options,
+        outDir: path.join(workDir, 'files'),
+      },
+    });
+
+    this.__program.emit(undefined, undefined, undefined, true);
+
+    const currentDir = process.cwd();
+    const sourceFiles = this.__program.getSourceFiles();
+    for (const src of sourceFiles) {
+      const { fileName } = src;
+      const relativePath = path.relative(currentDir, fileName);
+      this.__deps.push(makeFileDep(relativePath));
+    }
 	}
+
+  getDeps() {
+    return this.__deps;
+  }
+
+  getParams() {
+    return this.options;
+  }
 
 }
 
