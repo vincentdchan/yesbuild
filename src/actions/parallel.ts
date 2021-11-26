@@ -1,57 +1,55 @@
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
-import { isUndefined } from 'lodash-es';
 import { fork, ForkOptions } from 'child_process';
 import { green } from 'chalk';
-import { performance } from 'perf_hooks';
 import BufferList from 'bl';
-import { makeTaskDep } from '../dependency';
+import logger from '../logger';
 
 class ForkError extends Error {
 
-  constructor(
-    public readonly error: string,
-    public readonly code: number,
-    public readonly stdout: any) {
-    super(error);
-  }
+	constructor(
+		public readonly error: string,
+		public readonly code: number,
+		public readonly stdout: any) {
+		super(error);
+	}
 
 }
 
 function forkAsync(command: string, args: string[], options?: ForkOptions): Promise<string> {
-  const child = fork(command, args, options)
-  const stdout = new BufferList();
-  const stderr = new BufferList();
+	const child = fork(command, args, options)
+	const stdout = new BufferList();
+	const stderr = new BufferList();
 
-  if (child.stdout) {
-    child.stdout.on('data', data => {
-      stdout.append(data)
-    })
-  }
+	if (child.stdout) {
+		child.stdout.on('data', data => {
+			stdout.append(data)
+		})
+	}
 
-  if (child.stderr) {
-    child.stderr.on('data', data => {
-      stderr.append(data)
-    })
-  }
+	if (child.stderr) {
+		child.stderr.on('data', data => {
+			stderr.append(data)
+		})
+	}
 
-  const promise = new Promise<string>((resolve, reject) => {
-    child.on('error', reject)
+	const promise = new Promise<string>((resolve, reject) => {
+		child.on('error', reject)
 
-    child.on('close', code => {
-      if (code === 0) {
-        resolve(stdout.toString())
-      } else {
-        const err = new ForkError(`child exited with code ${code}`, code, stdout);
-        reject(err)
-      }
-    })
-  })
+		child.on('close', code => {
+			if (code === 0) {
+				resolve(stdout.toString())
+			} else {
+				const err = new ForkError(`child exited with code ${code}`, code, stdout);
+				reject(err)
+			}
+		})
+	})
 
-  return promise;
+	return promise;
 }
 
 export class ParallelExecutor extends ActionExecutor {
-	
+
 	public static actionName: string = 'parallel';
 
 	public constructor(private tasks: string[]) {
@@ -59,55 +57,54 @@ export class ParallelExecutor extends ActionExecutor {
 	}
 
 	async execute(ctx: ExecuteContext) {
-    if (isUndefined(ctx.updatedDeps) && !ctx.forceUpdate) {
-      return;
-    }
-    await this.executeAll(ctx);
+		await this.__executeAll(ctx);
 	}
 
-  async executeAll(ctx: ExecuteContext) {
-    console.log('filename: ', __filename);
-    const beginTime = performance.now();
-    const tasks = this.tasks.map(name => this.__executeTask(name, ctx));
-    const tuples = await Promise.all(tasks);
-    const endTime = performance.now();
-    const delta = Math.round(endTime - beginTime);
-    console.log(`Action ${green(ParallelExecutor.actionName)} done in ${delta}ms!`);
-    for (const [taskName, out] of tuples) {
-      console.log(`Output of ${green(taskName)}:`);
-      console.log(out);
-    }
-  }
+	private async __executeAll(ctx: ExecuteContext) {
+		const tasks = this.tasks.map(name => this.__executeTask(name, ctx));
+		const tuples = await Promise.all(tasks);
+		for (const [taskName, out] of tuples) {
+			// no output or all of them are whitespaces, ignore them
+			// if (out.length === 0 || /\s+/.test(out)) {
+			// 	console.log(`continue of ${out}`);
+			// 	continue;
+			// }
+			console.log(`Output of ${green(taskName)}:`);
+			console.log(out.length);
+			console.log(out);
+		}
+	}
 
-	
-  /**
-   * fork self to execute task
-   */
-  private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, string]> {
-    console.log(`Spwaning task ${green(taskName)}`);
-    const { workDir } = ctx;
-    const args: string[] = [
-      'build',
-      workDir,
-      '-t',
-      taskName,
-      '-f',
-      '--no-conclusion',
-    ];
+	/**
+	 * fork self to execute task
+	 */
+	private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, string]> {
+		logger.printIfReadable(`Spwaning task ${green(taskName)}`);
+		const { workDir } = ctx;
+		const args: string[] = [
+			'build',
+			workDir,
+			'-t',
+			taskName,
+			'--no-conclusion',
+		];
 
-    const stdout = await forkAsync(__filename, args, {
-      stdio: 'pipe',
-    });
+		const stdout = await forkAsync(__filename, args, {
+			stdio: 'pipe',
+		});
 
-    return [taskName, stdout];
-  }
+		return [taskName, stdout];
+	}
 
 	public getParams(): string[] {
 		return this.tasks;
 	}
 
-	public getDeps(): string[] {
-		return this.tasks.map(makeTaskDep);
+	/**
+	 * This is saying, this task will be execute everytime
+	 */
+	public getDeps(): '*' {
+		return '*';
 	}
 
 }

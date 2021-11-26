@@ -15,7 +15,6 @@ export function validateActionName(name: string) {
 export interface ExecuteContext {
 	workDir: string,
 	forceUpdate: boolean,
-	updatedDeps?: string[],
 }
 
 /**
@@ -38,8 +37,8 @@ export abstract class ActionExecutor {
 	 * Return the dependency literals,
 	 * the action will be executed if dependencies changed.
 	 */
-	getDeps(): string[] {
-		return [];
+	getDeps(): string[] | '*' | undefined {
+		return undefined;
 	}
 
 	/**

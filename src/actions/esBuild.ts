@@ -6,6 +6,8 @@ import {
 	BuildOptions as EsBuildOptions,
 	Metafile as EsMetaFile,
 } from 'esbuild';
+import { cyan } from 'chalk';
+import { performance } from 'perf_hooks';
 
 export interface BuildOptions {
   entry: string,
@@ -43,9 +45,13 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 			plugins: []
 		};
 
+		const beginTime = performance.now();
 		const result = await esbuild(esBuildOptions);
 		const metafile = result.metafile!;
 		this.buildGraphFromEsBuild(metafile);
+		const endTime = performance.now();
+		
+		console.log(`Esbuild finished in ${cyan(Math.round(endTime - beginTime))}ms`);
   }
 
 	buildGraphFromEsBuild(metafile: EsMetaFile) {

@@ -2,12 +2,10 @@ import { join, resolve } from 'path';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import { green, red } from 'chalk';
-import { performance } from 'perf_hooks';
 import { config, ConfigOptions } from './configProject';
 import { TaskNode, BuildGraph } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
-
-let taskCounter = 0;
+import logger from './logger';
 
 export interface BuildOptions {
 	buildDir: string,
@@ -17,8 +15,7 @@ export interface BuildOptions {
 }
 
 export async function build(options: BuildOptions) {
-  const beginTime = performance.now();
-	const { buildDir, task: taskName, conclusion, forceUpdate } = options;
+	const { buildDir, task: taskName, forceUpdate } = options;
 	const ymlPath = join(buildDir, 'yesbuild.yml');
 	if (!fs.existsSync(ymlPath)) {
 		throw new Error(`yesbuild.yml not found in ${ymlPath}`);
@@ -29,7 +26,7 @@ export async function build(options: BuildOptions) {
 	const graph = BuildGraph.fromJSON(objs);
 
   if (graph.needsReconfig(ymlPath)) {
-    console.log(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
+    logger.printIfReadable(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
     const configOptions: ConfigOptions = {
       buildDir: resolve(buildDir, '..'),
     };
@@ -47,27 +44,18 @@ export async function build(options: BuildOptions) {
   } else {
     const tasksToRun = graph.checkDependenciesUpdated(taskName, forceUpdate);
     if (tasksToRun.length === 0) {
-      console.log();
-      console.log('\ud83c\udf1e Everything is up to date.');
-      console.log();
+			logger.printAndExit();
       return;
     }
 
-		console.log('tasks to rebuild: ', JSON.stringify(tasksToRun));
     for (const taskName of tasksToRun) {
       const task = graph.tasks.get(taskName);
       if (!task) {
-        console.log(`Task ${red(taskName)} not found!`);
-        process.exit(1);
+        logger.panic(`Task ${red(taskName)} not found!`);
+				return;
       }
       await runTask(task, taskName, taskOptions);
     }
-  }
-
-  const endTime = performance.now();
-  if (taskCounter > 0 && conclusion) {
-    console.log();
-    console.log(`Totally ${taskCounter} tasks in ${Math.round(endTime - beginTime)}ms.`);
   }
 }
 
@@ -87,26 +75,17 @@ export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions) {
 }
 
 async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions) {
-  taskCounter++;
-  console.log(`Running task: ${green(taskName)}`);
-  let updatedEntries: string[] | undefined;
+	logger.plusTaskCounter();
+  logger.printIfReadable(`Running task: ${green(taskName)}`);
 
 	const { workDir: buildDir, forceUpdate } = options;
 
-  await rebuild(taskName, task, buildDir, Boolean(forceUpdate), updatedEntries);
+  await rebuild(taskName, task, buildDir, Boolean(forceUpdate));
 }
 
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean, updatedEntries?: string[]) {
-	if (updatedEntries && updatedEntries.length > 0) {
-		console.log(`Rebuild action ${green(taskName)} because of these dependencies changed:`)
-		for (const entry of updatedEntries) {
-			console.log(`  - ${entry}`);
-		}
-	}
-
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean) {
 	const executeContext: ExecuteContext = Object.freeze({
 		workDir: buildDir,
-		updatedDeps: updatedEntries,
     forceUpdate,
 	});
 
@@ -114,8 +93,8 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 		const { name, params } = rawAction;
 		const actionCtor = getAction(name);
 		if (!actionCtor) {
-			console.log(`Unreconized action ${red(name)}, can not rebuild.`);
-			process.exit(1);
+			logger.panic(`Unreconized action ${red(name)}, can not rebuild.`);
+			return;
 		}
 
 		const action = new actionCtor(params);

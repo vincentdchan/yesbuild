@@ -1,6 +1,7 @@
 import { isObjectLike, isUndefined, isString, max } from 'lodash-es';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
+import { red } from 'chalk';
 import { testFileDep, testTaskDep } from './dependency';
 
 const YML_VERSION = '1.0';
@@ -23,7 +24,7 @@ export function makeTaskOutput(): TaskOutput {
 export interface TaskNode {
   actions: ActionStore[],
   outputs: string[];
-  deps: string[];
+  deps?: string[] | '*';
 }
 
 export function makeTaskNode(): TaskNode {
@@ -275,6 +276,14 @@ export class BuildGraph {
       throw new Error(`Can not find task ${taskName}`);
     }
     if (isUndefined(task.deps)) {
+      return;
+    }
+    if (isString(task.deps)) {
+      if (task.deps === '*') {
+        collector.addTaskNamesToUpdate([taskName]);
+      } else {
+        console.log(`${red('Error')}: Unreconiged deps: ${task.deps}, ignored.`);
+      }
       return;
     }
     for (const depLiteral of task.deps) {
