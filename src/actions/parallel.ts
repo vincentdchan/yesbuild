@@ -1,47 +1,24 @@
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
-import { fork, ForkOptions } from 'child_process';
+import { fork } from 'child_process';
 import { green } from 'chalk';
-import BufferList from 'bl';
+import { isUndefined } from 'lodash-es';
 import logger from '../logger';
 
-class ForkError extends Error {
+/**
+ * child process's data will print to stderr
+ */
+function forkAsync(command: string, args: string[]): Promise<any | undefined> {
+	const child = fork(command, args);
 
-	constructor(
-		public readonly error: string,
-		public readonly code: number,
-		public readonly stdout: any) {
-		super(error);
-	}
-
-}
-
-function forkAsync(command: string, args: string[], options?: ForkOptions): Promise<string> {
-	const child = fork(command, args, options)
-	const stdout = new BufferList();
-	const stderr = new BufferList();
-
-	if (child.stdout) {
-		child.stdout.on('data', data => {
-			stdout.append(data)
-		})
-	}
-
-	if (child.stderr) {
-		child.stderr.on('data', data => {
-			stderr.append(data)
-		})
-	}
-
-	const promise = new Promise<string>((resolve, reject) => {
+	const promise = new Promise<any | undefined>((resolve, reject) => {
 		child.on('error', reject)
 
-		child.on('close', code => {
-			if (code === 0) {
-				resolve(stdout.toString())
-			} else {
-				const err = new ForkError(`child exited with code ${code}`, code, stdout);
-				reject(err)
-			}
+		child.on('message', (data) => {
+			resolve(data);
+		});
+
+		child.on('close', () => {
+			resolve(undefined);
 		})
 	})
 
@@ -63,21 +40,18 @@ export class ParallelExecutor extends ActionExecutor {
 	private async __executeAll(ctx: ExecuteContext) {
 		const tasks = this.tasks.map(name => this.__executeTask(name, ctx));
 		const tuples = await Promise.all(tasks);
-		for (const [taskName, out] of tuples) {
+		for (const [, out] of tuples) {
 			// no output or all of them are whitespaces, ignore them
-			if (out.length === 0 || /\s+/.test(out)) {
-				console.log(`continue of ${out}`);
-				continue;
+			if (!isUndefined(out)) {
+				logger.mergesOutput(out);
 			}
-			const obj = JSON.parse(out);
-			logger.mergesOutput(obj);
 		}
 	}
 
 	/**
 	 * fork self to execute task
 	 */
-	private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, string]> {
+	private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, any | undefined]> {
 		logger.printIfReadable(`Spwaning task ${green(taskName)}`);
 		const { workDir } = ctx;
 		const args: string[] = [
@@ -85,12 +59,11 @@ export class ParallelExecutor extends ActionExecutor {
 			workDir,
 			'-t',
 			taskName,
-			'--log json',
+			'--log',
+			'json',
 		];
 
-		const stdout = await forkAsync(__filename, args, {
-			stdio: 'pipe',
-		});
+		const stdout = await forkAsync(__filename, args);
 
 		return [taskName, stdout];
 	}

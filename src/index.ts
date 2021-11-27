@@ -40,7 +40,9 @@ cli
       logger.mode = LogMode.Data;
     }
     build(buildOptions)
-      .then(() => logger.printAndExit())
+      .then(() => {
+        logger.printAndExit()
+      })
       .catch(err => {
         logger.panic(err.toString())
       });

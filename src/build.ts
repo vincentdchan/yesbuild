@@ -2,6 +2,7 @@ import { join, resolve } from 'path';
 import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import { green, red } from 'chalk';
+import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
 import { TaskNode, BuildGraph } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
@@ -43,7 +44,6 @@ export async function build(options: BuildOptions) {
   } else {
     const tasksToRun = graph.checkDependenciesUpdated(taskName, forceUpdate);
     if (tasksToRun.length === 0) {
-			logger.printAndExit();
       return;
     }
 
@@ -104,11 +104,13 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 		taskNode.deps = deps;
 		taskNode.outputs = outputs;
 
-		for (const o of outputs) {
-			logger.addOutput({
-				file: o,
-				size: 0,
-			});
+		if (isArray(outputs)) {
+			for (const o of outputs) {
+				logger.addOutput({
+					file: o,
+					size: 0,
+				});
+			}
 		}
 	}
 }

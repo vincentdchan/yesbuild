@@ -41,17 +41,19 @@ export class Logger {
 			return this.__prettyPrint(delta);
 		}
 
-		console.log(JSON.stringify({
+		// data mod print data to stderr
+		// because some plugin may accidently use stdio
+		process.send({
 			outputs: this.__output,
 			delta,
 			taskCount: this.__taskCounter,
-		}));
+		});
 
 		process.exit(exitCode);
 	}
 
 	public mergesOutput(objs: any) {
-		if (isObjectLike(objs)) {
+		if (!isObjectLike(objs)) {
 			return;
 		}
 		const outputs = objs.outputs || [];
@@ -77,14 +79,21 @@ export class Logger {
 	}
 
 	private __prettyPrint(delta: number) {
-		if (this.__taskCounter === 0) {
-			console.log();
-			console.log('\ud83c\udf1e Everything is up to date.');
-			console.log();
+		if (this.__errors.length > 0) {
+			for (const err of this.__errors) {
+				console.log(err);
+			}
 			return;
 		}
 
-		console.log(`Totally ${this.__taskCounter} tasks is executed in ${Math.round(delta)}ms`);
+		console.log();
+		if (this.__output.length === 0) {
+			console.log('\ud83c\udf1e Everything is up to date.');
+			console.log()
+		} else {
+			console.log(`${this.__output.length} outputs generated.`);
+		}
+		console.log(`Totally ${this.__taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
 	}
 
 	public printIfReadable(content: string) {
