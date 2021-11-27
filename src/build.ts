@@ -9,21 +9,21 @@ import { getAction, ExecuteContext } from './actions';
 import logger from './logger';
 
 export interface BuildOptions {
-	buildDir: string,
+  buildDir: string,
   task: string,
-	forceUpdate?: boolean,
+  forceUpdate?: boolean,
 }
 
 export async function build(options: BuildOptions) {
-	const { buildDir, task: taskName, forceUpdate } = options;
-	const ymlPath = join(buildDir, 'yesbuild.yml');
-	if (!fs.existsSync(ymlPath)) {
-		throw new Error(`yesbuild.yml not found in ${ymlPath}`);
-	}
+  const { buildDir, task: taskName, forceUpdate } = options;
+  const ymlPath = join(buildDir, 'yesbuild.yml');
+  if (!fs.existsSync(ymlPath)) {
+    throw new Error(`yesbuild.yml not found in ${ymlPath}`);
+  }
 
-	const content = await fs.promises.readFile(ymlPath, 'utf-8');
-	const objs: any = yaml.load(content);
-	const graph = BuildGraph.fromJSON(objs);
+  const content = await fs.promises.readFile(ymlPath, 'utf-8');
+  const objs: any = yaml.load(content);
+  const graph = BuildGraph.fromJSON(objs);
 
   if (graph.needsReconfig(ymlPath)) {
     logger.printIfReadable(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
@@ -33,11 +33,11 @@ export async function build(options: BuildOptions) {
     await config(configOptions);
   }
 
-	const taskOptions: RunTaskOptions = {
-		forceUpdate: Boolean(forceUpdate),
-		ymlPath,
-		workDir: buildDir,
-	}
+  const taskOptions: RunTaskOptions = {
+    forceUpdate: Boolean(forceUpdate),
+    ymlPath,
+    workDir: buildDir,
+  }
 
   if (taskName === '*') {
     await runAllTasks(graph, taskOptions);
@@ -51,7 +51,7 @@ export async function build(options: BuildOptions) {
       const task = graph.tasks.get(taskName);
       if (!task) {
         logger.panic(`Task ${red(taskName)} not found!`);
-				return;
+        return;
       }
       await runTask(task, taskName, taskOptions);
     }
@@ -59,9 +59,9 @@ export async function build(options: BuildOptions) {
 }
 
 export interface RunTaskOptions {
-	forceUpdate?: boolean;
-	ymlPath: string;
-	workDir: string;
+  forceUpdate?: boolean;
+  ymlPath: string;
+  workDir: string;
 }
 
 export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions) {
@@ -74,43 +74,43 @@ export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions) {
 }
 
 async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions) {
-	logger.plusTaskCounter();
+  logger.plusTaskCounter();
   logger.printIfReadable(`Running task: ${green(taskName)}`);
 
-	const { workDir: buildDir, forceUpdate } = options;
+  const { workDir: buildDir, forceUpdate } = options;
 
   await rebuild(taskName, task, buildDir, Boolean(forceUpdate));
 }
 
 async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean) {
-	const executeContext: ExecuteContext = Object.freeze({
-		workDir: buildDir,
+  const executeContext: ExecuteContext = Object.freeze({
+    workDir: buildDir,
     forceUpdate,
-	});
+  });
 
-	for (const rawAction of taskNode.actions) {
-		const { name, params } = rawAction;
-		const actionCtor = getAction(name);
-		if (!actionCtor) {
-			logger.panic(`Unreconized action ${red(name)}, can not rebuild.`);
-			return;
-		}
+  for (const rawAction of taskNode.actions) {
+    const { name, params } = rawAction;
+    const actionCtor = getAction(name);
+    if (!actionCtor) {
+      logger.panic(`Unreconized action ${red(name)}, can not rebuild.`);
+      return;
+    }
 
-		const action = new actionCtor(params);
-		await action.execute(executeContext);
+    const action = new actionCtor(params);
+    await action.execute(executeContext);
 
-		const outputs = action.getOutputs();
-		const deps = action.getDeps();
-		taskNode.deps = deps;
-		taskNode.outputs = outputs;
+    const outputs = action.getOutputs();
+    const deps = action.dependencyBuilder.finalize();
+    taskNode.deps = deps;
+    taskNode.outputs = outputs;
 
-		if (isArray(outputs)) {
-			for (const o of outputs) {
-				logger.addOutput({
-					file: o,
-					size: 0,
-				});
-			}
-		}
-	}
+    if (isArray(outputs)) {
+      for (const o of outputs) {
+        logger.addOutput({
+          file: o,
+          size: 0,
+        });
+      }
+    }
+  }
 }

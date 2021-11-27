@@ -6,7 +6,7 @@ const FILE_PREFIX = 'file://';
 
 export type Dependencies = string[] | '*' | undefined;
 
-export function makeFileDep(path: string) {
+function makeFileDep(path: string) {
   return FILE_PREFIX + path;
 }
 
@@ -34,10 +34,44 @@ export const testTaskDep = makeTestDep(TASK_PREFIX);
 
 export class DependencyBuilder {
 
+  private __deps: Dependencies = undefined;
+
+  public constructor() {}
+
+  public addDep(literal: string) {
+    if (this.__deps === '*') {
+      return;
+    }
+    if (literal === '*') {
+      this.__deps = '*';
+      return;
+    }
+    if (isUndefined(this.__deps)) {
+      this.__deps = [];
+    }
+    this.__deps.push(literal);
+  }
+
+  public dependFile(path: string) {
+    this.addDep(makeFileDep(path));
+  }
+
+  public finalize(): Dependencies {
+    if (isArray(this.__deps)) {
+      return this.__deps.sort();
+    } else {
+      return this.__deps;
+    }
+  }
+
+}
+
+export class YesbuildContext {
+
   /**
    * use Set<> to avoid duplicate deps
    */
-  private __deps: Dependencies = undefined;
+  private __depsBuilder: DependencyBuilder = new DependencyBuilder();
   public readonly actions: ActionExecutor[] = [];
 
   public constructor(
@@ -55,36 +89,22 @@ export class DependencyBuilder {
   }
 
   private addDep(literal: string) {
-    if (this.__deps === '*') {
-      return;
-    }
-    if (literal === '*') {
-      this.__deps = '*';
-      return;
-    }
-    if (isUndefined(this.__deps)) {
-      this.__deps = [];
-    }
-    this.__deps.push(literal);
+    this.__depsBuilder.addDep(literal);
   }
 
   public finalize() {
-    if (isArray(this.__deps)) {
-      this.taskNode.deps = this.__deps.sort();
-    } else {
-      this.taskNode.deps = this.__deps;
-    }
+    this.taskNode.deps = this.__depsBuilder.finalize();
   }
 
 }
 
-let depBuilder: DependencyBuilder;
+let yesbuildContext: YesbuildContext;
 
-export function newDependencyBuilder(graph: BuildGraph, buildDir: string, taskNode: TaskNode): DependencyBuilder {
-  depBuilder = new DependencyBuilder(graph, buildDir, taskNode);
-  return depBuilder;
+export function newYesbuildContext(graph: BuildGraph, buildDir: string, taskNode: TaskNode): YesbuildContext {
+  yesbuildContext = new YesbuildContext(graph, buildDir, taskNode);
+  return yesbuildContext;
 }
 
-export function getDependencyBuilder(): DependencyBuilder {
-  return depBuilder;
+export function useYesbuildContext(): YesbuildContext {
+  return yesbuildContext;
 }

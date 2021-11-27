@@ -1,7 +1,6 @@
 import { isUndefined } from 'lodash-es';
 import * as path from 'path';
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
-import { makeFileDep } from '../dependency';
 import ts from 'typescript';
 import * as tsconfig from 'tsconfig';
 
@@ -19,7 +18,6 @@ export class TypeScriptExecutor extends ActionExecutor {
 	public static actionName: string = 'typescript'
   private __program: ts.Program;
   private __config: any;
-  private __deps: string[] = [];
 
   public constructor(private options: TypeScriptBuildOptions) {
     super();
@@ -32,7 +30,7 @@ export class TypeScriptExecutor extends ActionExecutor {
     const configFile = ts.findConfigFile(process.cwd(), fileExists);
     if (!isUndefined(configFile)) {
       this.__config = tsconfig.readFileSync(configFile);
-      this.__deps.push(makeFileDep(configFile));
+      this.dependencyBuilder.dependFile(configFile);
     }
 
     let options: ts.CompilerOptions = {};
@@ -62,13 +60,9 @@ export class TypeScriptExecutor extends ActionExecutor {
     for (const src of sourceFiles) {
       const { fileName } = src;
       const relativePath = path.relative(currentDir, fileName);
-      this.__deps.push(makeFileDep(relativePath));
+      this.dependencyBuilder.dependFile(relativePath);
     }
 	}
-
-  getDeps() {
-    return this.__deps;
-  }
 
   getParams() {
     return this.options;

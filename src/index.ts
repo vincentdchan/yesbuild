@@ -72,5 +72,6 @@ export {
   registerAction,
   getAction,
 } from './actions';
+export { useYesbuildContext } from './dependency';
 export { TaskCallback, ConfigOptions };
 export default registry;

@@ -4,6 +4,7 @@ import { RegistryContext }  from './registry';
 import { BuildGraph } from './buildGraph';
 import { runAllTasks, RunTaskOptions } from './build';
 import { green, gray } from 'chalk';
+import type { Dependencies } from './dependency';
 import type { ConfigOptions } from './configProject';
 import logger from './logger';
 
@@ -20,7 +21,7 @@ export class Profile {
     public readonly name: string,
     public readonly path: string,
     public readonly registry: RegistryContext,
-    public readonly deps: string[]) {
+    public readonly deps: Dependencies) {
     this.__graph = new BuildGraph(deps);
 	}
 

@@ -116,7 +116,7 @@ export class BuildGraph {
 	}
 
 	public constructor(
-    public readonly deps: string[] = []
+    public readonly deps: Dependencies = []
   ) {}
 
   public needsReconfig(ymlPath: string): boolean {

@@ -1,7 +1,7 @@
 import { validateActionName } from './actions';
 import { isUndefined } from 'lodash-es';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
-import { newDependencyBuilder } from './dependency'
+import { newYesbuildContext } from './dependency'
 
 export type TaskCallback = () => void | undefined | null | string[];
 
@@ -47,7 +47,7 @@ export class RegistryContext {
    */
   private __executeTaskToCollectDeps(graph: BuildGraph, buildDir: string, taskName: string) {
     const taskNode = getOrNewTaskNode(graph, taskName);
-    const builder = newDependencyBuilder(graph, buildDir, taskNode);
+    const builder = newYesbuildContext(graph, buildDir, taskNode);
     const task = this.__tasks.get(taskName);
     if (!task) {
       throw new Error(`Collecting depencencies failed: task '${taskName}' not found`);

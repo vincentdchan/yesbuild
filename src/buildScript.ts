@@ -7,7 +7,7 @@ import {
 	BuildOptions as EsBuildOptions,
 	BuildResult as EsBuildResult,
 } from 'esbuild';
-import { makeFileDep } from './dependency';
+import { DependencyBuilder } from './dependency';
 import { Profile } from './profile';
 import { isUndefined } from 'lodash-es';
 import registry from './registry';
@@ -56,9 +56,9 @@ function findBuildScriptPath(): { name: string, path: string }[] {
 	return result;
 }
 
-async function bundleBuildScript(entry: string, deps?: Set<string>): Promise<string> {
+async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder): Promise<string> {
 	const outfile = entry + '.js';
-	const collectDeps = !isUndefined(deps);
+	const collectDeps = !isUndefined(depBuilder);
 	const esBuildOptions: EsBuildOptions = {
 		entryPoints: [entry],
 		bundle: true,
@@ -75,12 +75,12 @@ async function bundleBuildScript(entry: string, deps?: Set<string>): Promise<str
 
 	const buildResult = await esbuild(esBuildOptions);
 	if (collectDeps) {
-		collectDependenciesByBuildResult(buildResult, deps!);
+		collectDependenciesByBuildResult(buildResult, depBuilder!);
 	}
 	return outfile;
 }
 
-function collectDependenciesByBuildResult(result: EsBuildResult, deps: Set<string>) {
+function collectDependenciesByBuildResult(result: EsBuildResult, depBuilder: DependencyBuilder) {
 	if (isUndefined(result.metafile)) {
 		return;
 	}
@@ -88,7 +88,7 @@ function collectDependenciesByBuildResult(result: EsBuildResult, deps: Set<strin
 	for (const key in outputs) {
 		const output = outputs[key];
 		for (const dep of Object.keys(output.inputs)) {
-			deps.add(makeFileDep(dep));
+			depBuilder.dependFile(dep);
 		}
 	}
 }
@@ -110,10 +110,10 @@ export async function loadBuildScript(): Promise<Profile[]> {
 }
 
 async function loadScriptAsProfile(name: string, path: string): Promise<Profile> {
-	const deps: Set<string> = new Set();
-	const scriptPath = await bundleBuildScript(path, deps);
+	const depBuilder: DependencyBuilder = new DependencyBuilder();
+	const scriptPath = await bundleBuildScript(path, depBuilder);
 	require(scriptPath);
 	fs.unlinkSync(scriptPath);
 	const registryContext = registry.takeContext();
-	return new Profile(name, path, registryContext, [...deps]);
+	return new Profile(name, path, registryContext, depBuilder.finalize());
 }

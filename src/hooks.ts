@@ -1,4 +1,4 @@
-import { getDependencyBuilder } from './dependency';
+import { useYesbuildContext } from './dependency';
 import { join } from 'path';
 import {
   EsbuildBundleExecutor,
@@ -9,7 +9,7 @@ import {
 } from './actions';
 
 export function useBuildDir(): string {
-  const builder = getDependencyBuilder();
+  const builder = useYesbuildContext();
   return builder.buildDir;
 }
 
@@ -19,21 +19,21 @@ export function useServeDir(): string {
 }
 
 export function useBuild(options: BuildOptions): void {
-  const builder = getDependencyBuilder();
+  const builder = useYesbuildContext();
   const actionExecutor = new EsbuildBundleExecutor(options);
 
   builder.addAction(actionExecutor);
 }
 
 export function useTypeScript(options: TypeScriptBuildOptions): void {
-  const builder = getDependencyBuilder();
+  const builder = useYesbuildContext();
   const executor = new TypeScriptExecutor(options);
 
   builder.addAction(executor);
 }
 
 export function useParallel(tasks: string[]): void {
-  const builder = getDependencyBuilder();
+  const builder = useYesbuildContext();
   const executor = new ParallelExecutor(tasks);
 
   builder.addAction(executor);
