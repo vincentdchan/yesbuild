@@ -2,7 +2,7 @@ import { isObjectLike, isUndefined, isString, max } from 'lodash-es';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { red } from 'chalk';
-import { testFileDep, testTaskDep } from './dependency';
+import { testFileDep, testTaskDep, Dependencies } from './dependency';
 import logger from './logger';
 
 const YML_VERSION = '1.0';
@@ -25,7 +25,7 @@ export function makeTaskOutput(): TaskOutput {
 export interface TaskNode {
   actions: ActionStore[],
   outputs: string[];
-  deps?: string[] | '*';
+  deps?: Dependencies;
 }
 
 export function makeTaskNode(): TaskNode {

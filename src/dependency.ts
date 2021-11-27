@@ -1,7 +1,10 @@
+import { isUndefined, isArray } from 'lodash-es';
 import { BuildGraph, TaskNode } from './buildGraph';
 import { ActionExecutor } from './actions';
 
 const FILE_PREFIX = 'file://';
+
+export type Dependencies = string[] | '*' | undefined;
 
 export function makeFileDep(path: string) {
   return FILE_PREFIX + path;
@@ -34,16 +37,14 @@ export class DependencyBuilder {
   /**
    * use Set<> to avoid duplicate deps
    */
-  private __deps: Set<string> = new Set();
+  private __deps: Dependencies = undefined;
   public readonly actions: ActionExecutor[] = [];
 
   public constructor(
     public readonly graph: BuildGraph,
     public readonly buildDir: string,
     private taskNode: TaskNode,
-  ) {
-
-  }
+  ) {}
 
   public addStaticPoolDep(name: string) {
     this.addDep(makeStaticDep(name));
@@ -54,12 +55,24 @@ export class DependencyBuilder {
   }
 
   private addDep(literal: string) {
-    this.__deps.add(literal);
+    if (this.__deps === '*') {
+      return;
+    }
+    if (literal === '*') {
+      this.__deps = '*';
+      return;
+    }
+    if (isUndefined(this.__deps)) {
+      this.__deps = [];
+    }
+    this.__deps.push(literal);
   }
 
   public finalize() {
-    for (const dep of this.__deps) {
-      this.taskNode.deps.push(dep);
+    if (isArray(this.__deps)) {
+      this.taskNode.deps = this.__deps.sort();
+    } else {
+      this.taskNode.deps = this.__deps;
     }
   }
 
