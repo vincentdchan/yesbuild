@@ -60,6 +60,7 @@ export class ParallelExecutor extends ActionExecutor {
       buildDir,
       '-t',
       taskName,
+			'--ignore-meta',
       '--log',
       'json',
     ];

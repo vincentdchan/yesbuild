@@ -30,11 +30,13 @@ cli
   })
   .option('-f, --force', 'Force rebuild')
   .option('--log <log>', 'Log type')
+  .option('--ignore-meta', 'Do NOT check the original config file')
   .action((builddir, options) => {
     const buildOptions: BuildOptions = {
       buildDir: builddir,
       task: options.task,
       forceUpdate: options.force,
+      ignoreMeta: options.ignoreMeta,
     };
     if (options.log === 'json') {
       logger.mode = LogMode.Data;

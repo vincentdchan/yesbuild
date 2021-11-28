@@ -1,6 +1,6 @@
-import { join, resolve } from 'path';
+import { join } from 'path';
 import * as fs from 'fs';
-import { green, red } from 'chalk';
+import { green, red, cyan } from 'chalk';
 import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
 import { Deps, DependenciesChangedCell } from './dependency';
@@ -12,6 +12,7 @@ export interface BuildOptions {
   buildDir: string,
   task: string,
   forceUpdate?: boolean,
+	ignoreMeta?: boolean,
 }
 
 export async function build(options: BuildOptions) {
@@ -23,14 +24,17 @@ export async function build(options: BuildOptions) {
 
   const graph = await BuildGraph.loadPartialFromYml(ymlPath);
 
-	// TODO(Vincent Chan): check only reconfig in main process
-  if (graph.needsReconfig(ymlPath)) {
-    logger.printIfReadable(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
-    const configOptions: ConfigOptions = {
-      buildDir: resolve(buildDir, '..'),
-    };
-    await config(configOptions);
-  }
+	let changedDepOfMeta: string | undefined = undefined
+	if (!options.ignoreMeta && (changedDepOfMeta = graph.needsReconfig(buildDir))) {
+		logger.printIfReadable(`${cyan(changedDepOfMeta)} changed, reconfig...`);
+		const configOptions: ConfigOptions = {
+			buildDir,
+		};
+		await config(configOptions);
+
+		logger.printIfReadable(`Finished, continue to build...`);
+		logger.printIfReadable();
+	}
 
   const taskOptions: RunTaskOptions = {
     forceUpdate: Boolean(forceUpdate),

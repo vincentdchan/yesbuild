@@ -1,4 +1,4 @@
-import { isString, isObjectLike } from 'lodash-es';
+import { isString, isObjectLike, isUndefined } from 'lodash-es';
 import { performance } from 'perf_hooks';
 import { grey } from 'chalk';
 
@@ -119,11 +119,15 @@ export class Logger {
 		console.log(`Totally ${this.__taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
 	}
 
-	public printIfReadable(content: string) {
+	public printIfReadable(content?: string) {
 		if (this.mode !== LogMode.Readable) {
 			return;
 		}
-		console.log(content);
+		if (isUndefined(content)) {
+			console.log();
+		} else {
+			console.log(content);
+		}
 	}
 
 	public addOutput(output: OutputLog) {

@@ -1,4 +1,4 @@
-import { isObjectLike, isUndefined, isString, max } from 'lodash-es';
+import { isObjectLike, isUndefined, isString, isArray, maxBy } from 'lodash-es';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
@@ -39,6 +39,10 @@ export function makeTaskNode(): TaskNode {
 
 export function makeTaskYmlFilename(buildDir: string, taskName: string): string {
   return path.join(buildDir, `yesbuild.${taskName}.yml`);
+}
+
+function makeMetaYmlFilename(buildDir): string {
+  return path.join(buildDir, 'yesbuild.yml');
 }
 
 /**
@@ -88,22 +92,22 @@ class DependenciesCollector {
 
 }
 
-function findLatestTimeOfOutput(outputs: string[]): number {
-	const times: number[] = [];
+function findLatestTimeOfOutput(outputs: string[]): [string, number] {
+	const times: [string, number][] = [];
 
 	for (const output of outputs) {
 		const stat = fs.statSync(output);
 		const { mtimeMs } = stat;
-		times.push(mtimeMs);
+		times.push([output, mtimeMs]);
 	}
 
-	return max(times);
+	return maxBy(times, ([, time]) => time);
 }
-
 
 export class BuildGraph {
 
   public readonly tasks: Map<string, TaskNode> = new Map();
+  private __metaDeps: Dependencies;
 
   public static async loadPartialFromYml(path: string): Promise<BuildGraph> {
     const content = await fs.promises.readFile(path, 'utf-8');
@@ -116,7 +120,7 @@ export class BuildGraph {
 			throw new Error(`ModuleGraph::__fromJSON only received object, but got ${objs}`);
 		}
 
-    const result = new BuildGraph(objs.deps);
+    const result = new BuildGraph();
 
     const name = objs['name'];
 
@@ -131,28 +135,48 @@ export class BuildGraph {
     return result;
 	}
 
-	public constructor(
-    public readonly deps: Dependencies = []
-  ) {}
+  public constructor(metaDeps: Dependencies = undefined) {
+    this.__metaDeps = metaDeps;
+  }
 
-  public needsReconfig(ymlPath: string): boolean {
+  private __loadMeta(buildDir: string) {
+    const filename = makeMetaYmlFilename(buildDir);
+    const content = fs.readFileSync(filename, 'utf8');
+    const objs: any = yaml.load(content);
+    this.__metaDeps = objs.deps;
+  }
+
+  /**
+   * Check if the dependencies of `yesbuild.yml` changed,
+   * if changed, return the filename.
+   */
+  public needsReconfig(buildDir: string): string | undefined {
+    this.__loadMeta(buildDir);
+    const ymlPath = makeMetaYmlFilename(buildDir);
     const stat = fs.statSync(ymlPath);
     const { mtimeMs } = stat;
     return this.__checkDepsForRoot(mtimeMs);
   }
 
-  private __checkDepsForRoot(mtimeMs: number): boolean {
+  private __checkDepsForRoot(mtimeMs: number): string | undefined {
+    if (!isArray(this.__metaDeps)) {
+      return undefined;
+    }
     const files: string [] = [];
-    for (const depLiteral of this.deps) {
+    for (const depLiteral of this.__metaDeps) {
       let testResult = testFileDep(depLiteral);
       if (!isString(testResult)) {
-        throw new Error(`Only file:// dependency is supported for yml, but ${depLiteral} got`);
+        throw new Error(`Only file:// dependency is supported for yesbuild.yml, but ${depLiteral} got`);
       }
       files.push(testResult);
     }
 
-    const latestTime = findLatestTimeOfOutput(files);
-    return latestTime > mtimeMs;
+    const [filename, latestTime] = findLatestTimeOfOutput(files);
+    if (latestTime > mtimeMs) {
+      console.log('return ', filename);
+      return filename;
+    }
+    return undefined;
   }
 
   /**
@@ -269,7 +293,7 @@ export class BuildGraph {
 
   private __checkFileDeps(collector: DependenciesCollector, filename: string, taskNames: string[]) {
     const outputs = this.__getAllOutputsOfTaskNames(taskNames);
-    const latestTime = findLatestTimeOfOutput(outputs);
+    const [, latestTime] = findLatestTimeOfOutput(outputs);
     let changed: boolean = false;
     try {
       const stat = fs.statSync(filename);
@@ -354,7 +378,11 @@ export class BuildGraph {
     return false;
   }
 
-  public async dumpFiles(dir: string): Promise<any> {
+  public async dumpFiles(dir: string, ignoreMeta?: boolean): Promise<any> {
+    if (!ignoreMeta) {
+      await this.__dumpMetaFiles(dir);
+    }
+
     const promises: Promise<any>[] = [];
     for (const [taskName, task] of this.tasks) {
       promises.push(this.__dumpFile(dir, taskName, task));
@@ -369,11 +397,20 @@ export class BuildGraph {
     objs['version'] = YML_VERSION;
     objs['name'] = taskName;
     objs["task"] = taskNode;
-    objs['deps'] = this.deps;  // config file deps
 
 		const result = yaml.dump(objs);
 
     return fs.promises.writeFile(path, result);
+  }
+
+  private __dumpMetaFiles(dir: string): Promise<any> {
+    const filename = makeMetaYmlFilename(dir);
+		const objs: any = Object.create(null);
+    objs['version'] = YML_VERSION;
+    objs['deps'] = this.__metaDeps;
+		const result = yaml.dump(objs);
+
+    return fs.promises.writeFile(filename, result);
   }
 
 }
