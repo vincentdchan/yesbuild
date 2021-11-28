@@ -7,20 +7,19 @@ import {
 	BuildOptions as EsBuildOptions,
 	BuildResult as EsBuildResult,
 } from 'esbuild';
-import { DependencyBuilder } from './dependency';
-import { Profile } from './profile';
+import { DependencyBuilder, Dependencies } from './dependency';
 import { isUndefined } from 'lodash-es';
-import registry from './registry';
+import registry, { RegistryContext } from './registry';
 import logger  from './logger';
 
-function findProjectPath(): string | null {
+function findProjectPath(): string | undefined {
 	let currentDir = process.cwd();
 	let packageJsonPath = path.join(currentDir, 'package.json');
 
 	while (!fs.existsSync(packageJsonPath)) {
 		const tmp = path.resolve(currentDir, '..');
 		if (tmp === currentDir) {  // it's the end
-			return null;
+			return undefined;
 		}
 		packageJsonPath = path.join(currentDir, 'package.json');
 	}
@@ -28,32 +27,29 @@ function findProjectPath(): string | null {
 	return currentDir;
 }
 
-function findBuildScriptPath(): { name: string, path: string }[] {
+function findBuildScriptPath(): string | undefined {
 	const projectPath = findProjectPath();
-	if (projectPath === null) {
-		return null;
+	if (isUndefined(projectPath)) {
+		return undefined;
 	}
 
-	const result = [];
-	const files = fs.readdirSync(projectPath);
-
-	for (const file of files) {
-		const testResult = /yesbuild.(.+).(js|ts|mjs)/.exec(file);
-		if (testResult) {
-			let name = testResult[1];
-			if (isUndefined(name)) {
-				throw new Error(`name is undefined for path: ${file}`);
-			}
-			name = name.replace(/(\.|\\|\/)/g, '_');  // escape the special chars
-			const fullPath = path.join(projectPath, file);
-			result.push({
-				name,
-				path: fullPath,
-			});
-		}
+	let expectedFilename: string;
+	expectedFilename = path.join(projectPath, 'yesbuild.config.js');
+	if (fs.existsSync(expectedFilename)) {
+		return expectedFilename;
 	}
 
-	return result;
+	expectedFilename = path.join(projectPath, 'yesbuild.config.mjs');
+	if (fs.existsSync(expectedFilename)) {
+		return expectedFilename;
+	}
+
+	expectedFilename = path.join(projectPath, 'yesbuild.config.ts');
+	if (fs.existsSync(expectedFilename)) {
+		return expectedFilename;
+	}
+
+	return undefined;
 }
 
 async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder): Promise<string> {
@@ -93,27 +89,32 @@ function collectDependenciesByBuildResult(result: EsBuildResult, depBuilder: Dep
 	}
 }
 
-export async function loadBuildScript(): Promise<Profile[]> {
+export interface BuildScriptContext {
+	path: string;
+	registry: RegistryContext;
+	deps: Dependencies;
+}
+
+export function loadBuildScript(): Promise<BuildScriptContext> {
 	const buildScriptPath = findBuildScriptPath();
-	if (buildScriptPath.length === 0) {
+	if (isUndefined(buildScriptPath)) {
 		logger.printIfReadable('No build script found.');
 		return;
 	}
 
-	const result: Profile[] = [];
-	for (const { name, path } of buildScriptPath) {
-		const profile = await loadScriptAsProfile(name, path);
-		result.push(profile);
-	}
-
-	return result;
+	return loadScriptAsProfile(buildScriptPath);
 }
 
-async function loadScriptAsProfile(name: string, path: string): Promise<Profile> {
+async function loadScriptAsProfile(path: string): Promise<BuildScriptContext> {
 	const depBuilder: DependencyBuilder = new DependencyBuilder();
 	const scriptPath = await bundleBuildScript(path, depBuilder);
 	require(scriptPath);
 	fs.unlinkSync(scriptPath);
 	const registryContext = registry.takeContext();
-	return new Profile(name, path, registryContext, depBuilder.finalize());
+	// return new Profile(path, registryContext, depBuilder.finalize());
+	return {
+		path,
+		registry: registryContext,
+		deps: depBuilder.finalize(),
+	};
 }
