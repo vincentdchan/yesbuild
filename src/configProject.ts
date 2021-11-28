@@ -1,4 +1,4 @@
-import { join, basename } from 'path';
+import { basename } from 'path';
 import { BuildScriptContext, loadBuildScript } from './buildScript';
 import { BuildGraph } from './buildGraph';
 import { runAllTasks, RunTaskOptions } from './build';
@@ -21,17 +21,7 @@ async function __configure(graph: BuildGraph, scriptContext: BuildScriptContext,
 	logger.printIfReadable(`\ud83d\udd28 Geneating project for ${gray(scriptFilename)} ...`);
 	const { buildDir } = options;
 
-	const depsFilePath = join(buildDir, 'yesbuild.yml');
 	registry.executeTaskToCollectDeps(graph, buildDir);
-	await miniBuild(graph, buildDir, depsFilePath);
-	await graph.dumpToYml(depsFilePath);
-}
-
-async function miniBuild(graph: BuildGraph, workDir: string, ymlPath: string) {
-	const taskOptions: RunTaskOptions = {
-		forceUpdate: false,
-		ymlPath,
-		workDir,
-	}
-	await runAllTasks(graph, taskOptions);
+	await runAllTasks(graph, buildDir, false);
+	await graph.dumpFiles(buildDir);
 }

@@ -1,11 +1,10 @@
 import { join, resolve } from 'path';
-import * as yaml from 'js-yaml';
 import * as fs from 'fs';
 import { green, red } from 'chalk';
 import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
 import { mergeDependencies, DependenciesChangedCell } from './dependency';
-import { TaskNode, BuildGraph } from './buildGraph';
+import { TaskNode, BuildGraph, makeTaskYmlFilename } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
 import logger from './logger';
 
@@ -17,15 +16,14 @@ export interface BuildOptions {
 
 export async function build(options: BuildOptions) {
   const { buildDir, task: taskName, forceUpdate } = options;
-  const ymlPath = join(buildDir, 'yesbuild.yml');
+  const ymlPath = makeTaskYmlFilename(buildDir, taskName);
   if (!fs.existsSync(ymlPath)) {
-    throw new Error(`yesbuild.yml not found in ${ymlPath}`);
+    throw new Error(`${ymlPath} not exists, task ${taskName} can not build`);
   }
 
-  const content = await fs.promises.readFile(ymlPath, 'utf-8');
-  const objs: any = yaml.load(content);
-  const graph = BuildGraph.fromJSON(objs);
+  const graph = await BuildGraph.loadPartialFromYml(ymlPath);
 
+	// TODO(Vincent Chan): check only reconfig in main process
   if (graph.needsReconfig(ymlPath)) {
     logger.printIfReadable(`Dependencies of ${green(ymlPath)} changed, reconfig...`);
     const configOptions: ConfigOptions = {
@@ -46,7 +44,7 @@ export async function build(options: BuildOptions) {
 		changed: false,
 	};
   if (taskName === '*') {
-    await runAllTasks(graph, taskOptions);
+    await runAllTasks(graph, buildDir, taskOptions.forceUpdate);
   } else {
     const tasksToRun = graph.checkDependenciesUpdated(taskName, forceUpdate);
     if (tasksToRun.length === 0) {
@@ -77,11 +75,16 @@ export interface RunTaskOptions {
   workDir: string;
 }
 
-export async function runAllTasks(graph: BuildGraph, options: RunTaskOptions, changedCell?: DependenciesChangedCell) {
-  const { forceUpdate } = options;
+export async function runAllTasks(graph: BuildGraph, buildDir: string, forceUpdate: boolean, changedCell?: DependenciesChangedCell) {
   const orderedTasks: string[] = graph.checkDependenciesUpdated('*', forceUpdate);
   for (const taskName of orderedTasks) {
     const task = graph.tasks.get(taskName);
+		const ymlPath = makeTaskYmlFilename(buildDir, taskName);
+		const options: RunTaskOptions = {
+			forceUpdate,
+			ymlPath,
+			workDir: buildDir,
+		};
     await runTask(task, taskName, options, changedCell);
   }
 }

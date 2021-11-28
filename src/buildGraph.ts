@@ -1,4 +1,5 @@
 import { isObjectLike, isUndefined, isString, max } from 'lodash-es';
+import * as path from 'path';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { red } from 'chalk';
@@ -34,6 +35,10 @@ export function makeTaskNode(): TaskNode {
     outputs: Object.create(null),
     deps: undefined,
   };
+}
+
+export function makeTaskYmlFilename(buildDir: string, taskName: string): string {
+  return path.join(buildDir, `yesbuild.${taskName}.yml`);
 }
 
 /**
@@ -100,17 +105,32 @@ export class BuildGraph {
 
   public readonly tasks: Map<string, TaskNode> = new Map();
 
-	public static fromJSON(objs: any): BuildGraph {
+  public static async loadPartialFromYml(path: string): Promise<BuildGraph> {
+    const content = await fs.promises.readFile(path, 'utf-8');
+    const objs: any = yaml.load(content);
+    return BuildGraph.__fromJSON(objs);
+  }
+
+	private static __fromJSON(objs: any): BuildGraph {
 		if (!isObjectLike(objs)) {
-			throw new Error(`ModuleGraph::fromJSON only received object, but got ${objs}`);
+			throw new Error(`ModuleGraph::__fromJSON only received object, but got ${objs}`);
 		}
 
     const result = new BuildGraph(objs.deps);
 
-    for (const key in objs.tasks) {
-      const value = objs.tasks[key];
-      result.tasks.set(key, value);
+    const name = objs['name'];
+
+    if (!isString(name)) {
+      throw new Error(`'name' not found in yml`);
     }
+
+    const task = objs['task'];
+
+    if (!isObjectLike(task)) {
+      throw new Error(`'task' not found in yml`);
+    }
+
+    result.tasks.set(name, task);
 
     return result;
 	}
@@ -329,25 +349,26 @@ export class BuildGraph {
     return false;
   }
 
-  public async dumpToYml(path: string): Promise<any> {
+  public async dumpFiles(dir: string): Promise<any> {
+    const promises: Promise<any>[] = [];
+    for (const [taskName, task] of this.tasks) {
+      promises.push(this.__dumpFile(dir, taskName, task));
+    }
+
+    await Promise.all(promises);
+  }
+
+  private __dumpFile(dir: string, taskName: string, taskNode: TaskNode): Promise<any> {
+    const path = makeTaskYmlFilename(dir, taskName);
 		const objs: any = Object.create(null);
     objs['version'] = YML_VERSION;
-    this.dumpTasks(objs);
-    objs['deps'] = this.deps;
+    objs['name'] = taskName;
+    objs["task"] = taskNode;
+    objs['deps'] = this.deps;  // config file deps
 
 		const result = yaml.dump(objs);
 
-    await fs.promises.writeFile(path, result);
-  }
-
-  private dumpTasks(objs: any) {
-    const tasks: any = Object.create(null);
-
-    for (const [key, value] of this.tasks) {
-      tasks[key] = value;
-    }
-
-    objs["tasks"] = tasks;
+    return fs.promises.writeFile(path, result);
   }
 
 }

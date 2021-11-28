@@ -1,5 +1,6 @@
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
 import { fork } from 'child_process';
+import { resolve } from 'path';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import logger from '../logger';
@@ -11,7 +12,7 @@ function forkAsync(command: string, args: string[]): Promise<any | undefined> {
   const child = fork(command, args);
 
   const promise = new Promise<any | undefined>((resolve, reject) => {
-    child.on('error', reject)
+    child.on('error', reject);
 
     child.on('message', (data) => {
       resolve(data);
@@ -19,8 +20,8 @@ function forkAsync(command: string, args: string[]): Promise<any | undefined> {
 
     child.on('close', () => {
       resolve(undefined);
-    })
-  })
+    });
+  });
 
   return promise;
 }
@@ -55,9 +56,10 @@ export class ParallelExecutor extends ActionExecutor {
   private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, any | undefined]> {
     logger.printIfReadable(`Spwaning task ${green(taskName)}`);
     const { workDir } = ctx;
+		const rootBuildDir = resolve(workDir, '..'); 
     const args: string[] = [
       'build',
-      workDir,
+      rootBuildDir,
       '-t',
       taskName,
       '--log',

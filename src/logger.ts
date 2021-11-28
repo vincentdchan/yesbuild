@@ -41,13 +41,16 @@ export class Logger {
 			return this.__prettyPrint(delta);
 		}
 
-		// data mod print data to stderr
-		// because some plugin may accidently use stdio
-		process.send({
+		const data = {
 			outputs: this.__output,
 			delta,
 			taskCount: this.__taskCounter,
-		});
+		};
+		try {
+			process.send(data);
+		} catch (err) {
+			console.error(data);
+		}
 
 		process.exit(exitCode);
 	}
