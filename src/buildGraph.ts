@@ -220,6 +220,7 @@ export class BuildGraph {
       return true;
     }
 
+    let lastIterLen = iteratesNode.length;
     // graph reduction
     while (iteratesNode.length > 0) {
       const nextIteratesNode: string[] = [];
@@ -234,6 +235,10 @@ export class BuildGraph {
         }
       }
 
+      if (nextIteratesNode.length === lastIterLen) {
+        throw new Error(`Dead loop detection for tasks: ${iteratesNode.join(', ')}`);
+      }
+      lastIterLen = nextIteratesNode.length;
       iteratesNode = nextIteratesNode;
     }
 

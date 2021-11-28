@@ -32,6 +32,12 @@ export function makeTaskDep(path: string) {
 export const testFileDep = makeTestDep(FILE_PREFIX);
 export const testTaskDep = makeTestDep(TASK_PREFIX);
 
+/**
+ * Helper to collect and finalize the dependencies
+ * 
+ * For example, sort the string literal
+ * to help comparation and merging.
+ */
 export class DependencyBuilder {
 
   private __deps: Dependencies = undefined;
@@ -68,9 +74,6 @@ export class DependencyBuilder {
 
 export class YesbuildContext {
 
-  /**
-   * use Set<> to avoid duplicate deps
-   */
   private __depsBuilder: DependencyBuilder = new DependencyBuilder();
   public readonly actions: ActionExecutor[] = [];
 
