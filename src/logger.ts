@@ -1,5 +1,6 @@
 import { isString, isObjectLike } from 'lodash-es';
 import { performance } from 'perf_hooks';
+import { grey } from 'chalk';
 
 export enum LogMode {
 	Readable = 0,
@@ -26,12 +27,17 @@ export class Logger {
 	public mode: LogMode = LogMode.Readable;
 	private __output: OutputLog[] = [];
 	private __errors: ErrorLog[] = [];
+	private __updatedYmlFiles: string[] = [];
 	private __beginTime: number;
 	private __endTime: number;
 	private __taskCounter: number = 0;
 
 	constructor() {
 		this.__endTime = this.__beginTime = performance.now();
+	}
+
+	public addUpdatedYml(path: string) {
+		this.__updatedYmlFiles.push(path);
 	}
 
 	public printAndExit(exitCode: number = 0) {
@@ -45,6 +51,7 @@ export class Logger {
 			outputs: this.__output,
 			delta,
 			taskCount: this.__taskCounter,
+			updatedYmlFiles: this.__updatedYmlFiles,
 		};
 		try {
 			process.send(data);
@@ -65,6 +72,11 @@ export class Logger {
 		}
 		const taskCount = objs.taskCount || 0;
 		this.__taskCounter += taskCount;
+
+		const updatedYmlFiles = objs.updatedYmlFiles || [];
+		for (const f of updatedYmlFiles) {
+			this.__updatedYmlFiles.push(f);
+		}
 	}
 
 	public error(error: ErrorLog | string) {
@@ -87,6 +99,14 @@ export class Logger {
 				console.log(err);
 			}
 			return;
+		}
+
+		if (this.__updatedYmlFiles.length > 0) {
+			console.log();
+			console.log(`These YML files have changed due to the dependencies:`);
+			for (const f of this.__updatedYmlFiles) {
+				console.log(` - ${grey(f)}`)
+			}
 		}
 
 		console.log();

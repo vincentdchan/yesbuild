@@ -74,77 +74,35 @@ export interface DependenciesChangedCell {
   changed: boolean;
 }
 
-/// This function is assuming d1 and d2 are normalized.
-///
-/// Merging rules is based on pattern matching:
-///
-/// undefined, d2        => d2
-/// d1       , undefined => d1
-/// '*'      , d2        => '*'
-/// d1       , '*' .     => '*'
-/// string[] , string[]  => mergeLiteral(d1, d2)
-export function mergeDependencies(d1: Dependencies, d2: Dependencies, changedCell?: DependenciesChangedCell): Dependencies {
-  if (isUndefined(d1)) {
-    if (changedCell && !isUndefined(d2)) {
-      changedCell.changed = true;
-    }
-    return d2;
-  }
-  if (isUndefined(d2)) {
-    if (changedCell) {
-      changedCell.changed = true;
-    }
-    return d1;
-  }
-  if (d1 === '*' || d2 === '*') {
-    if (changedCell && d1 !== d2) {
-      changedCell.changed = true;
-    }
-    return '*';
+function dependenciesArrayEquals(d1: string[], d2: string[]): boolean {
+  if (d1.length !== d2.length) {
+    return false;
   }
 
-  if (isArray(d1) && isArray(d2)) {
-    return mergeDependenciesArray(d1, d2, changedCell);
+  for (let i = 0; i < d1.length; i++) {
+    const str1 = d1[i];
+    const str2 = d2[i];
+    if (str1 !== str2) {
+      return false;
+    }
   }
 
-  throw new Error(`Unexpected dependencies: ${d1} and ${d2}`);
+  return true;
 }
 
-/// This function is assuming d1 and d2 are sorted.
-function mergeDependenciesArray(d1: string[], d2: string[], changedCell?: DependenciesChangedCell): string[] {
-  const result: string[] = [];
-  let mayChanged: boolean = false;
+export const Deps = {
 
-  for (let i = 0, j = 0; i < d1.length || j < d2.length;) {
-    const str1 = d1[i];
-    const str2 = d2[j];
-
-    if (isUndefined(str1)) {
-      result.push(str2);
-      j++;
-      mayChanged = true;
-    } else if (isUndefined(str2)) {
-      result.push(str1);
-      i++;
-      mayChanged = true;
-    } else if (str1 === str2) {
-      result.push(str1);
-      i++;
-      j++;
-    } else if (str1 < str2) {
-      result.push(str1);
-      i++
-      mayChanged = true;
-    } else {  // str1 > str2
-      result.push(str2);
-      j++;
-      mayChanged = true;
+  /// check if dependencies is equal
+  equals(d1: Dependencies, d2: Dependencies): boolean {
+    if (d1 === d2) {
+      return true;
     }
+
+    if (isArray(d1) && isArray(d2)) {
+      return dependenciesArrayEquals(d1, d2);
+    }
+
+    return false;
   }
 
-  if (mayChanged && changedCell) {
-    changedCell.changed = true;
-  }
-
-  return result;
 }

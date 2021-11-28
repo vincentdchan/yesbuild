@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { green, red } from 'chalk';
 import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
-import { mergeDependencies, DependenciesChangedCell } from './dependency';
+import { Deps, DependenciesChangedCell } from './dependency';
 import { TaskNode, BuildGraph, makeTaskYmlFilename } from './buildGraph';
 import { getAction, ExecuteContext } from './actions';
 import logger from './logger';
@@ -44,7 +44,7 @@ export async function build(options: BuildOptions) {
 		changed: false,
 	};
   if (taskName === '*') {
-    await runAllTasks(graph, buildDir, taskOptions.forceUpdate);
+    await runAllTasks(graph, buildDir, taskOptions.forceUpdate, dependenciesChangedCell);
   } else {
     const tasksToRun = graph.checkDependenciesUpdated(taskName, forceUpdate);
     if (tasksToRun.length === 0) {
@@ -57,15 +57,13 @@ export async function build(options: BuildOptions) {
         logger.panic(`Task ${red(taskName)} not found!`);
         return;
       }
-      await runTask(task, taskName, taskOptions);
+      await runTask(task, taskName, taskOptions, dependenciesChangedCell);
     }
   }
 
-	// Important to know:
-	// If the dependencies of a child task changed.
-	// It's not safe for a child-process to write the yml file itself.
 	if (dependenciesChangedCell.changed) {
-		logger.printIfReadable('Dependencies changed');
+		await graph.dumpFiles(buildDir);
+		logger.addUpdatedYml(ymlPath);
 	}
 }
 
@@ -120,7 +118,12 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
     const outputs = action.getOutputs();
     const newDeps = action.dependencyBuilder.finalize();
 		const { deps: previousDeps } = taskNode;
-    taskNode.deps = mergeDependencies(previousDeps, newDeps, changedCell);
+		if (!Deps.equals(previousDeps, newDeps)) {
+			taskNode.deps = newDeps;
+			if (changedCell) {
+				changedCell.changed = true;
+			}
+		}
     taskNode.outputs = outputs;
 
     if (isArray(outputs)) {

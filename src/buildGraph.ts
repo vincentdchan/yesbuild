@@ -120,17 +120,13 @@ export class BuildGraph {
 
     const name = objs['name'];
 
-    if (!isString(name)) {
-      throw new Error(`'name' not found in yml`);
+    if (isString(name)) {
+      const task = objs['task'];
+
+      if (isObjectLike(task)) {
+        result.tasks.set(name, task);
+      }
     }
-
-    const task = objs['task'];
-
-    if (!isObjectLike(task)) {
-      throw new Error(`'task' not found in yml`);
-    }
-
-    result.tasks.set(name, task);
 
     return result;
 	}
@@ -274,9 +270,18 @@ export class BuildGraph {
   private __checkFileDeps(collector: DependenciesCollector, filename: string, taskNames: string[]) {
     const outputs = this.__getAllOutputsOfTaskNames(taskNames);
     const latestTime = findLatestTimeOfOutput(outputs);
-    const stat = fs.statSync(filename);
-    const { mtimeMs } = stat;
-    if (mtimeMs > latestTime) {  // updated found
+    let changed: boolean = false;
+    try {
+      const stat = fs.statSync(filename);
+      const { mtimeMs } = stat;
+      if (mtimeMs > latestTime) {  // updated found
+        changed = true;
+      }
+    } catch (err) {  // stat failed, so files maybe deleted, rebuild it
+      changed = true;
+    }
+
+    if (changed) {
       collector.addTaskNamesToUpdate(taskNames);
     }
   }
