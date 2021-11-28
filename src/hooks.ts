@@ -1,4 +1,4 @@
-import { useYesbuildContext } from './dependency';
+import { useYesbuildContext } from "./context";
 import { join } from 'path';
 import {
   EsbuildBundleExecutor,

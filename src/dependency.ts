@@ -1,6 +1,4 @@
 import { isUndefined, isArray } from 'lodash-es';
-import { BuildGraph, TaskNode } from './buildGraph';
-import { ActionExecutor } from './actions';
 
 const FILE_PREFIX = 'file://';
 
@@ -19,13 +17,9 @@ function makeTestDep(prefix: string): (literal: string) => string | null {
   }
 }
 
-export function makeStaticDep(name: string) {
-  return 'static://' + name;
-}
-
 const TASK_PREFIX = 'task://';
 
-export function makeTaskDep(path: string) {
+function makeTaskDep(path: string) {
   return TASK_PREFIX + path;
 }
 
@@ -62,6 +56,10 @@ export class DependencyBuilder {
     this.addDep(makeFileDep(path));
   }
 
+  public dependTask(taskName: string) {
+    this.addDep(makeTaskDep(taskName));
+  }
+
   public finalize(): Dependencies {
     if (isArray(this.__deps)) {
       return this.__deps.sort();
@@ -70,44 +68,4 @@ export class DependencyBuilder {
     }
   }
 
-}
-
-export class YesbuildContext {
-
-  private __depsBuilder: DependencyBuilder = new DependencyBuilder();
-  public readonly actions: ActionExecutor[] = [];
-
-  public constructor(
-    public readonly graph: BuildGraph,
-    public readonly buildDir: string,
-    private taskNode: TaskNode,
-  ) {}
-
-  public addStaticPoolDep(name: string) {
-    this.addDep(makeStaticDep(name));
-  }
-
-  public addAction(action: ActionExecutor) {
-    this.actions.push(action);
-  }
-
-  private addDep(literal: string) {
-    this.__depsBuilder.addDep(literal);
-  }
-
-  public finalize() {
-    this.taskNode.deps = this.__depsBuilder.finalize();
-  }
-
-}
-
-let yesbuildContext: YesbuildContext;
-
-export function newYesbuildContext(graph: BuildGraph, buildDir: string, taskNode: TaskNode): YesbuildContext {
-  yesbuildContext = new YesbuildContext(graph, buildDir, taskNode);
-  return yesbuildContext;
-}
-
-export function useYesbuildContext(): YesbuildContext {
-  return yesbuildContext;
 }

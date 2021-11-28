@@ -1,7 +1,7 @@
 import { validateActionName } from './actions';
 import { isUndefined } from 'lodash-es';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
-import { newYesbuildContext } from './dependency'
+import { newYesbuildContext } from "./context";
 
 export type TaskCallback = () => void | undefined | null | string[];
 
