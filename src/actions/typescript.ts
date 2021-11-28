@@ -49,7 +49,7 @@ export class TypeScriptExecutor extends ActionExecutor {
       rootNames: entries,
       options: {
         ...options,
-        outDir: path.join(workDir, 'files'),
+        outDir: workDir,
       },
     });
 

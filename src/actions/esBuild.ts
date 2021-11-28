@@ -1,5 +1,4 @@
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
-import { join } from 'path';
 import {
   build as esbuild,
   BuildOptions as EsBuildOptions,
@@ -26,14 +25,13 @@ export class EsbuildBundleExecutor extends ActionExecutor {
   public async execute(ctx: ExecuteContext) {
     const { entry, platform, external } = this.options;
     const { workDir } = ctx;
-    const outdir = join(workDir, 'files');
     const esBuildOptions: EsBuildOptions = {
       entryPoints: [entry],
       bundle: true,
       format: 'esm',
       logLevel: 'error',
       splitting: true,
-      outdir,
+      outdir: workDir,
       sourcemap: true,
       platform: platform as any,
       metafile: true,

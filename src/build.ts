@@ -96,10 +96,10 @@ async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions
 }
 
 async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean, changedCell?: DependenciesChangedCell) {
-  const executeContext: ExecuteContext = Object.freeze({
+  const executeContext: ExecuteContext = {
     workDir: buildDir,
     forceUpdate,
-  });
+  };
 
   for (const rawAction of taskNode.actions) {
     const { name, params } = rawAction;
@@ -110,7 +110,11 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
     }
 
     const action = new actionCtor(params);
+
+		const prevWorkDir = executeContext.workDir;
+		executeContext.workDir = join(buildDir, name);
     await action.execute(executeContext);
+		executeContext.workDir = prevWorkDir;
 
     const outputs = action.getOutputs();
     const newDeps = action.dependencyBuilder.finalize();
