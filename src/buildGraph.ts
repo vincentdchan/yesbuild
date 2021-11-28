@@ -32,7 +32,7 @@ export function makeTaskNode(): TaskNode {
   return {
     actions: [],
     outputs: Object.create(null),
-    deps: [],
+    deps: undefined,
   };
 }
 
@@ -190,7 +190,7 @@ export class BuildGraph {
 
   /**
    * All the children tasks should run before the parents run.
-   * Computes the right order.
+   * Computes the correct order.
    * 
    * Find the free nodes first, free nodes representes the task that depends nothing.
    */
