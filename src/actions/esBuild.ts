@@ -24,14 +24,14 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 
   public async execute(ctx: ExecuteContext) {
     const { entry, platform, external } = this.options;
-    const { workDir } = ctx;
+    const { taskDir } = ctx;
     const esBuildOptions: EsBuildOptions = {
       entryPoints: [entry],
       bundle: true,
       format: 'esm',
       logLevel: 'error',
       splitting: true,
-      outdir: workDir,
+      outdir: taskDir,
       sourcemap: true,
       platform: platform as any,
       metafile: true,

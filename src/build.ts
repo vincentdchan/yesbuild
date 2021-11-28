@@ -99,25 +99,23 @@ async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions
 }
 
 async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean, changedCell?: DependenciesChangedCell) {
-  const executeContext: ExecuteContext = {
-    workDir: buildDir,
-    forceUpdate,
-  };
-
   for (const rawAction of taskNode.actions) {
     const { name, params } = rawAction;
     const actionCtor = getAction(name);
     if (!actionCtor) {
-      logger.panic(`Unreconized action ${red(name)}, can not rebuild.`);
+      logger.panic(`Unreconized action ${red(name)}, can not rebuild task ${taskName}.`);
       return;
     }
 
     const action = new actionCtor(params);
 
-		const prevWorkDir = executeContext.workDir;
-		executeContext.workDir = join(buildDir, name);
+		const executeContext: ExecuteContext = {
+			buildDir,
+			taskDir: join(buildDir, name),
+			forceUpdate,
+		};
+
     await action.execute(executeContext);
-		executeContext.workDir = prevWorkDir;
 
     const outputs = action.getOutputs();
     const newDeps = action.dependencyBuilder.finalize();

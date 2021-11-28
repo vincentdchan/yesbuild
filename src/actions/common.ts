@@ -14,7 +14,8 @@ export function validateActionName(name: string) {
 }
 
 export interface ExecuteContext {
-  workDir: string,
+  buildDir: string,
+	taskDir: string,
   forceUpdate: boolean,
 }
 

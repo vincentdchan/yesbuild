@@ -1,6 +1,5 @@
 import { ActionExecutor, registerAction, ExecuteContext } from './common';
 import { fork } from 'child_process';
-import { resolve } from 'path';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import logger from '../logger';
@@ -55,11 +54,10 @@ export class ParallelExecutor extends ActionExecutor {
    */
   private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, any | undefined]> {
     logger.printIfReadable(`Spwaning task ${green(taskName)}`);
-    const { workDir } = ctx;
-		const rootBuildDir = resolve(workDir, '..'); 
+    const { buildDir } = ctx;
     const args: string[] = [
       'build',
-      rootBuildDir,
+      buildDir,
       '-t',
       taskName,
       '--log',

@@ -43,13 +43,13 @@ export class TypeScriptExecutor extends ActionExecutor {
     }
 
     const { entries } = this.options;
-    const { workDir } = ctx;
+    const { taskDir } = ctx;
 
     this.__program = ts.createProgram({
       rootNames: entries,
       options: {
         ...options,
-        outDir: workDir,
+        outDir: taskDir,
       },
     });
 
