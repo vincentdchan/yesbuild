@@ -1,4 +1,5 @@
 import { DependencyBuilder } from '../dependency';
+import { OutputLog } from '../logger';
 
 const INTERNAL_ACTIONS = [
   'esbuild',
@@ -29,15 +30,14 @@ export abstract class ActionExecutor {
 
   constructor() {}
 
-
   abstract execute(ctx: ExecuteContext): Promise<void>
 
   /**
    * Return the outputs files so yesbuild can know what files
    * to track, and when to re-execute the action.
    */
-  getOutputs(): string[] {
-    return undefined;
+  getOutputs(): OutputLog[] {
+    return [];
   }
 
   /**

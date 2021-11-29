@@ -130,14 +130,11 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 				changedCell.changed = true;
 			}
 		}
-    taskNode.outputs = outputs;
+    taskNode.outputs = outputs.map(output => output.file);
 
     if (isArray(outputs)) {
       for (const o of outputs) {
-        logger.addOutput({
-          file: o,
-          size: 0,
-        });
+        logger.addOutput(o);
       }
     }
   }
