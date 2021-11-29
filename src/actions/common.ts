@@ -1,5 +1,5 @@
 import { DependencyBuilder } from '../dependency';
-import { OutputLog } from '../logger';
+import { OutputLog } from '../output';
 
 const INTERNAL_ACTIONS = [
   'esbuild',

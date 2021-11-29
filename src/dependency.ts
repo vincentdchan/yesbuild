@@ -1,4 +1,5 @@
 import { isUndefined, isArray } from 'lodash-es';
+import * as fs from 'fs';
 
 const FILE_PREFIX = 'file://';
 
@@ -27,6 +28,15 @@ export const testFileDep = makeTestDep(FILE_PREFIX);
 export const testTaskDep = makeTestDep(TASK_PREFIX);
 
 /**
+ * Only check the lock files instead of checking the large node_modules.
+ */
+const ALLOW_LOCKS = [
+  'yarn.lock',
+  'pnpm-lock.yaml',
+  'package-lock.json',
+];
+
+/**
  * Helper to collect and finalize the dependencies
  * 
  * For example, sort the string literal
@@ -35,6 +45,7 @@ export const testTaskDep = makeTestDep(TASK_PREFIX);
 export class DependencyBuilder {
 
   private __deps: Dependencies = undefined;
+  private __hasDepentLock: boolean = false;
 
   public constructor() {}
 
@@ -53,7 +64,26 @@ export class DependencyBuilder {
   }
 
   public dependFile(path: string) {
+    if (/^node_modules/.test(path) && this.__tryDependNpmLock()) {
+      return;
+    }
     this.addDep(makeFileDep(path));
+  }
+
+  private __tryDependNpmLock(): boolean {
+    if (this.__hasDepentLock) {
+      return true;
+    }
+
+    for (const name of ALLOW_LOCKS) {
+      if (fs.existsSync(name)) {
+        this.addDep(makeFileDep(name));
+        this.__hasDepentLock = true;
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public dependTask(taskName: string) {

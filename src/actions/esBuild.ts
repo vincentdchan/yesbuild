@@ -6,7 +6,7 @@ import {
 	Format as EsFormat,
 	Platform as EsPlatform,
 } from 'esbuild';
-import type { OutputLog } from '../logger';
+import { OutputLog } from '../output';
 
 export interface BuildOptions {
 	entryPoints: string[],

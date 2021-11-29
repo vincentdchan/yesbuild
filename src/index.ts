@@ -1,5 +1,5 @@
 import cac from 'cac';
-import { config, ConfigOptions } from './configProject';
+import configure, { ConfigOptions } from './configure';
 import { build, BuildOptions } from './build';
 import registry, { TaskCallback } from './registry';
 import { startServer } from './server';
@@ -17,7 +17,7 @@ cli
       buildDir: options.outdir,
     };
 
-    config(configOptions)
+    configure(configOptions)
       .then(() => {
         logger.printAndExit()
       })

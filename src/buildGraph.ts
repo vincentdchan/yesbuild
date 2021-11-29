@@ -122,13 +122,14 @@ export class BuildGraph {
 
     const result = new BuildGraph();
 
-    const name = objs['name'];
-
-    if (isString(name)) {
-      const task = objs['task'];
-
-      if (isObjectLike(task)) {
-        result.tasks.set(name, task);
+    if (isArray(objs['tasks'])) {
+      for (const task of objs['tasks']) {
+        if (isObjectLike(task)) {
+          const { name, ...taskNode } = task;
+          if (isString(name)) {
+            result.tasks.set(name, task);
+          }
+        }
       }
     }
 
@@ -402,8 +403,13 @@ export class BuildGraph {
     const path = makeTaskYmlFilename(dir, taskName);
 		const objs: any = Object.create(null);
     objs['version'] = YML_VERSION;
-    objs['name'] = taskName;
-    objs["task"] = taskNode;
+
+    const tasks = {
+      name: taskName,
+      ...taskNode,
+    }
+
+    objs['tasks'] = [ tasks ];
 
 		const result = yaml.dump(objs);
 

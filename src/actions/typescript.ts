@@ -4,7 +4,7 @@ import * as path from 'path';
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import ts from 'typescript';
 import * as tsconfig from 'tsconfig';
-import { OutputLog } from '../logger';
+import { OutputLog } from '../output';
 
 function fileExists(fileName: string) {
   return ts.sys.fileExists(fileName);
@@ -61,7 +61,11 @@ export class TypeScriptExecutor extends ActionExecutor {
 
     const { rootNames } = this.options;
     const { taskDir } = ctx;
-    cleanFilesInDir(taskDir);
+    if (fs.existsSync(taskDir)) {
+      cleanFilesInDir(taskDir);
+    } else {
+      fs.mkdirSync(taskDir);
+    }
 
     this.__program = ts.createProgram({
       rootNames,

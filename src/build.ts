@@ -2,7 +2,7 @@ import { join, resolve } from 'path';
 import * as fs from 'fs';
 import { green, red, cyan, grey } from 'chalk';
 import { isArray } from 'lodash-es';
-import { config, ConfigOptions } from './configProject';
+import configure, { ConfigOptions } from './configure';
 import { Deps, DependenciesChangedCell } from './dependency';
 import { TaskNode, BuildGraph, makeTaskYmlFilename } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
@@ -32,7 +32,7 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
 		const configOptions: ConfigOptions = {
 			buildDir,
 		};
-		await config(configOptions);
+		await configure(configOptions);
 
 		logger.printIfReadable(`Finished, continue to build...`);
 		logger.printIfReadable();

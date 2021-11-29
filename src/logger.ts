@@ -1,15 +1,11 @@
 import { isString, isObjectLike, isUndefined, maxBy } from 'lodash-es';
 import { performance } from 'perf_hooks';
 import { grey, cyan } from 'chalk';
+import type { OutputLog } from './output';
 
 export enum LogMode {
   Readable = 0,
   Data,
-}
-
-export interface OutputLog {
-  file: string,
-  size: number,
 }
 
 export interface ErrorLog {
@@ -22,7 +18,7 @@ function oneFloatingPoint(n: number) {
 
 function friendlySize(bytes: number): string {
   if (bytes < 1024) {
-    return `${bytes} bytes`;
+    return `${bytes}bytes`;
   } else if (bytes < 1024 * 1024) {
     return `${oneFloatingPoint(bytes / 1024)}kb`;
   } else if (bytes < 1024 * 1024 * 1024) {
