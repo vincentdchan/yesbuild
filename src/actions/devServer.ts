@@ -2,6 +2,7 @@ import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { isString, isUndefined } from 'lodash-es';
 import { Stage } from '../flags';
 import { Outputs } from '../output';
+import { startServer, InternalServerOptions } from '../server';
 
 export interface DevServerOptions {
   host?: string,
@@ -10,16 +11,10 @@ export interface DevServerOptions {
   mapOutputs?: string[],
 }
 
-interface InternalOptions {
-  host: string,
-  port: number,
-  mapOutputs: string[],
-}
-
 export class DevServer extends ActionExecutor {
 
   public static actionName: string = 'devServer';
-  private __options: InternalOptions;
+  private __options: InternalServerOptions;
 
   public constructor(options: DevServerOptions) {
     super();
@@ -52,10 +47,13 @@ export class DevServer extends ActionExecutor {
 	public execute(ctx: ExecutionContext) {
     if (ctx.stage === Stage.Configure) {
       ctx.depsBuilder.addDep('*');
+      return;
     }
+
+    startServer(this.__options);
   }
 
-  getParams() {
+  public getParams() {
     return this.__options;
   }
 

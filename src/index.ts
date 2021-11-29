@@ -2,7 +2,6 @@ import cac from 'cac';
 import configure, { ConfigOptions } from './configure';
 import { build, BuildOptions } from './build';
 import registry, { TaskCallback, ActionResult, ActionExecutorGenerator } from './registry';
-import { startServer } from './server';
 import logger, { LogMode } from './logger';
 import { FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
 
@@ -54,18 +53,6 @@ cli
       .catch(err => {
         logger.panic(err.toString())
       });
-  })
-
-cli
-  .command('serve <builddir>', 'Serve files in building dir')
-  .option('-p, --port <port>', 'The port of the server', {
-    default: 3000,
-  })
-  .action((builddir, options) => {
-    startServer({
-      buildDir: builddir,
-      port: options.port,
-    });
   })
 
 cli.help();
