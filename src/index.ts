@@ -77,7 +77,7 @@ export * from './hooks';
 export {
   ActionExecutor,
   ActionExecutorConstructor,
-  ExecuteContext,
+  ExecutionContext as ExecuteContext,
   registerAction,
   getAction,
 } from './actions';

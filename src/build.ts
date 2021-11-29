@@ -5,7 +5,7 @@ import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
 import { Deps, DependenciesChangedCell } from './dependency';
 import { TaskNode, BuildGraph, makeTaskYmlFilename } from './buildGraph';
-import { getAction, ExecuteContext } from './actions';
+import { getAction, ExecutionContext } from './actions';
 import logger from './logger';
 
 export interface BuildOptions {
@@ -113,7 +113,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 
     const action = new actionCtor(params);
 
-		const executeContext: ExecuteContext = {
+		const executeContext: ExecutionContext = {
 			buildDir,
 			taskDir: join(buildDir, name),
 			forceUpdate,

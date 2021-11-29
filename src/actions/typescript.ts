@@ -1,6 +1,6 @@
 import { isUndefined } from 'lodash-es';
 import * as path from 'path';
-import { ActionExecutor, registerAction, ExecuteContext } from './common';
+import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import ts from 'typescript';
 import * as tsconfig from 'tsconfig';
 
@@ -26,7 +26,7 @@ export class TypeScriptExecutor extends ActionExecutor {
     }
   }
 
-	async execute(ctx: ExecuteContext) {
+	async execute(ctx: ExecutionContext) {
     const configFile = ts.findConfigFile(process.cwd(), fileExists);
     if (!isUndefined(configFile)) {
       this.__config = tsconfig.readFileSync(configFile);

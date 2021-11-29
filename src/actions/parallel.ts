@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecuteContext } from './common';
+import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { fork } from 'child_process';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
@@ -34,11 +34,11 @@ export class ParallelExecutor extends ActionExecutor {
     this.dependencyBuilder.addDep('*');
   }
 
-  async execute(ctx: ExecuteContext) {
+  async execute(ctx: ExecutionContext) {
     await this.__executeAll(ctx);
   }
 
-  private async __executeAll(ctx: ExecuteContext) {
+  private async __executeAll(ctx: ExecutionContext) {
     const tasks = this.tasks.map(name => this.__executeTask(name, ctx));
     const tuples = await Promise.all(tasks);
     for (const [, out] of tuples) {
@@ -52,7 +52,7 @@ export class ParallelExecutor extends ActionExecutor {
   /**
    * fork self to execute task
    */
-  private async __executeTask(taskName: string, ctx: ExecuteContext): Promise<[string, any | undefined]> {
+  private async __executeTask(taskName: string, ctx: ExecutionContext): Promise<[string, any | undefined]> {
     logger.printIfReadable(`Spwaning task ${green(taskName)}`);
     const { buildDir } = ctx;
     const args: string[] = [

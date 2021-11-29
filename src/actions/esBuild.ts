@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecuteContext } from './common';
+import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import {
 	build as esbuild,
 	BuildOptions as EsBuildOptions,
@@ -23,7 +23,7 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 		super();
 	}
 
-	public async execute(ctx: ExecuteContext) {
+	public async execute(ctx: ExecutionContext) {
 		const { entry, platform, external } = this.options;
 		const { taskDir } = ctx;
 		const esBuildOptions: EsBuildOptions = {

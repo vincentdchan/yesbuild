@@ -14,7 +14,7 @@ export function validateActionName(name: string) {
   }
 }
 
-export interface ExecuteContext {
+export interface ExecutionContext {
   buildDir: string,
 	taskDir: string,
   forceUpdate: boolean,
@@ -30,7 +30,7 @@ export abstract class ActionExecutor {
 
   constructor() {}
 
-  abstract execute(ctx: ExecuteContext): Promise<void>
+  abstract execute(ctx: ExecutionContext): Promise<void>
 
   /**
    * Return the outputs files so yesbuild can know what files
