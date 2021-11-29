@@ -1,4 +1,3 @@
-import { useYesbuildContext } from "./context";
 import {
   ActionExecutor,
   EsbuildBundleExecutor,
@@ -11,10 +10,10 @@ import {
   DevServerOptions,
   DevServer,
 } from './actions';
+import { runningTaskRunner } from './buildScript';
 
 export function useTaskDir(): string {
-  const builder = useYesbuildContext();
-  return builder.taskDir;
+  return runningTaskRunner.taskDir;
 }
 
 export function uesEsBuild(options: BuildOptions): ActionExecutor {

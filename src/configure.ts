@@ -1,5 +1,5 @@
 import { basename } from 'path';
-import { BuildScriptContext, loadBuildScript } from './buildScript';
+import { BuildScriptContext, loadBuildScript, executeTaskToCollectDeps } from './buildScript';
 import { BuildGraph } from './buildGraph';
 import { gray } from 'chalk';
 import * as fs from 'fs';
@@ -20,7 +20,7 @@ async function __configure(graph: BuildGraph, scriptContext: BuildScriptContext,
   }
 
   // run user's registed function to collect deps
-  await registry.executeTaskToCollectDeps(graph, buildDir);
+  await executeTaskToCollectDeps(graph, registry, buildDir);
   await graph.dumpFiles(buildDir);
 }
 

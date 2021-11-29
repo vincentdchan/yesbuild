@@ -84,6 +84,5 @@ export {
   registerAction,
   getAction,
 } from './actions';
-export { useYesbuildContext } from './context';
 export { TaskCallback, ConfigOptions, ActionResult, ActionExecutorGenerator };
 export default registry;
