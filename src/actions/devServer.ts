@@ -2,6 +2,7 @@ import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { isString, isUndefined } from 'lodash-es';
 import { Stage } from '../flags';
 import { Outputs } from '../output';
+import * as fs from 'fs';
 import { startServer, InternalServerOptions } from '../server';
 
 export interface DevServerOptions {
@@ -45,12 +46,14 @@ export class DevServer extends ActionExecutor {
   }
 
 	public execute(ctx: ExecutionContext) {
+    const { taskDir } = ctx;
     if (ctx.stage === Stage.Configure) {
       ctx.depsBuilder.addDep('*');
+      fs.mkdirSync(taskDir, { recursive: true });
       return;
     }
 
-    startServer(this.__options);
+    startServer(taskDir, this.__options);
   }
 
   public getParams() {
