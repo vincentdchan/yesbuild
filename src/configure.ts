@@ -20,6 +20,7 @@ async function __configure(graph: BuildGraph, scriptContext: BuildScriptContext,
     fs.mkdirSync(buildDir, { recursive: true });
   }
 
+  // run user's registed function to collect deps
   registry.executeTaskToCollectDeps(graph, buildDir);
   await runAllTasks(graph, buildDir, false);
   await graph.dumpFiles(buildDir);

@@ -1,9 +1,9 @@
-import { validateActionName } from './actions';
+import { validateActionName, ActionExecutor } from './actions';
 import { isUndefined } from 'lodash-es';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
 import { newYesbuildContext } from "./context";
 
-export type TaskCallback = () => void | undefined | null | string[];
+export type TaskCallback = () => ActionExecutor;
 
 interface Task {
   name: string,
@@ -54,7 +54,10 @@ export class RegistryContext {
     }
 
     // call the user method to collect deps
-    task.userCallback.call(undefined);
+    const actionExecutor = task.userCallback.call(undefined);
+    if (actionExecutor instanceof ActionExecutor) {
+      builder.actions.push(actionExecutor);
+    }
 
     builder.finalize();
 

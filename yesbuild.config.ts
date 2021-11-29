@@ -1,7 +1,7 @@
 import yesbuild, { uesEsBuild, useTypeScript, useParallel } from './dist';
 
 yesbuild.registerTask('tsc', () => {
-  useTypeScript({
+  return useTypeScript({
     rootNames: [
       'src/index.ts',
     ],
@@ -13,7 +13,7 @@ yesbuild.registerTask('tsc', () => {
 });
 
 yesbuild.registerTask('esbuild', () => {
-  uesEsBuild({
+  return uesEsBuild({
     entryPoints: ['src/index.ts'],
     bundle: true,
     platform: 'node',
@@ -23,7 +23,7 @@ yesbuild.registerTask('esbuild', () => {
 });
 
 yesbuild.registerTask('default', () => {
-  useParallel([
+  return useParallel([
     'esbuild',
     'tsc',
   ]);
