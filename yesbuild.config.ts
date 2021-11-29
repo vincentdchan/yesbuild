@@ -1,7 +1,7 @@
 import yesbuild, { uesEsBuild, useTypeScript, useParallel,
   useCopyFrom, useTask, useDevServer } from './dist';
 
-yesbuild.registerTask('tsc', () => {
+yesbuild.defineTask('tsc', () => {
   return useTypeScript({
     rootNames: [
       'src/index.ts',
@@ -13,7 +13,7 @@ yesbuild.registerTask('tsc', () => {
   });
 });
 
-yesbuild.registerTask('esbuild', () => uesEsBuild({
+yesbuild.defineTask('esbuild', () => uesEsBuild({
   entryPoints: ['src/index.ts'],
   bundle: true,
   platform: 'node',
@@ -21,12 +21,12 @@ yesbuild.registerTask('esbuild', () => uesEsBuild({
   external: ['typescript']
 }));
 
-yesbuild.registerTask('default', () => useParallel([
+yesbuild.defineTask('default', () => useParallel([
   'esbuild',
   'tsc',
 ]));
 
-yesbuild.registerTask('serve', function*() {
+yesbuild.defineTask('serve', function*() {
   yield useCopyFrom('./package.json');
   const { outputs } = yield useTask('esbuild');
   return useDevServer({

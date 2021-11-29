@@ -19,7 +19,7 @@ export class RegistryContext {
 
   public constructor() {}
 
-  public registerTask(name: string, callback: TaskCallback) {
+  public defineTask(name: string, callback: TaskCallback) {
     const task: Task = {
       name,
       userCallback: callback,
@@ -39,8 +39,8 @@ class Registry {
 
   public constructor() {}
 
-  public registerTask(name: string, callback: TaskCallback) {
-    this.__ctx.registerTask(name, callback);
+  public defineTask(name: string, callback: TaskCallback) {
+    this.__ctx.defineTask(name, callback);
   }
 
   /**
