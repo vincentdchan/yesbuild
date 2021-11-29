@@ -41,7 +41,7 @@ export class TypeScriptExecutor extends ActionExecutor {
     }
   }
 
-  async execute(ctx: ExecutionContext) {
+  execute(ctx: ExecutionContext) {
     const configFile = ts.findConfigFile(process.cwd(), fileExists);
     if (!isUndefined(configFile)) {
       this.__config = tsconfig.readFileSync(configFile);

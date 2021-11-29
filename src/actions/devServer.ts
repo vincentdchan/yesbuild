@@ -1,5 +1,6 @@
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { isString, isUndefined } from 'lodash-es';
+import { Stage } from '../flags';
 import { Outputs } from '../output';
 
 export interface DevServerOptions {
@@ -48,7 +49,10 @@ export class DevServer extends ActionExecutor {
     }
   }
 
-	public async execute(ctx: ExecutionContext) {
+	public execute(ctx: ExecutionContext) {
+    if (ctx.stage === Stage.Configure) {
+      ctx.depsBuilder.addDep('*');
+    }
   }
 
   getParams() {

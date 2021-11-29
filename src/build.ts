@@ -1,10 +1,10 @@
 import { join, resolve } from 'path';
 import * as fs from 'fs';
 import { green, red, cyan, grey } from 'chalk';
-import { isArray } from 'lodash-es';
+import { isUndefined } from 'lodash-es';
 import configure, { ConfigOptions } from './configure';
 import { Deps, DependenciesChangedCell, DependencyBuilder } from './dependency';
-import { TaskNode, BuildGraph, makeTaskYmlFilename } from './buildGraph';
+import { TaskNode, BuildGraph, makeTaskYmlFilename, ActionStore } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
 import { FLAGS_STAGE_MASK, FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
 import { OutputLog, Outputs, OutputBuilder } from './output';
@@ -113,7 +113,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
   const depsBuilder = new DependencyBuilder(); 
   const outputBuilder = new OutputBuilder();
   buildDir = resolve(buildDir);
-  for (let i = 0; i < taskNode.actions.length; i++) {
+  for (const actionStore of taskNode.actions) {
     const executeContext: ExecutionContext = {
       stage: flags & FLAGS_STAGE_MASK,
       buildDir,
@@ -122,7 +122,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
       taskDir: join(buildDir, taskName),
       forceUpdate: Boolean(flags & FLAGS_FORCE_UPDATE),
     };
-    await runActionOfTask(executeContext, taskName, taskNode, i);
+    await runActionOfTask(executeContext, taskName, actionStore);
   }
 
   const newDeps = depsBuilder.finalize();
@@ -140,8 +140,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
   return result;
 }
 
-export async function runActionOfTask(ctx: ExecutionContext, taskName: string, taskNode: TaskNode, actionIndex: number): Promise<void> {
-  const rawAction = taskNode.actions[actionIndex];
+export async function runActionOfTask(ctx: ExecutionContext, taskName: string, rawAction: ActionStore): Promise<void> {
   const { name, params } = rawAction;
   const actionCtor = getAction(name);
   if (!actionCtor) {
@@ -151,5 +150,10 @@ export async function runActionOfTask(ctx: ExecutionContext, taskName: string, t
 
   const action = new actionCtor(params);
 
-  await action.__execute(ctx);
+  const tmp = action.execute(ctx);
+	if (isUndefined(tmp)) {
+		return;
+	}
+
+	return tmp;
 }

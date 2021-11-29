@@ -17,23 +17,13 @@ export interface ExecutionContext {
  */
 export abstract class ActionExecutor {
 
-  public readonly continuations: ((self: ActionExecutor) => void)[] = [];
-
   /**
    * Return the outputs files so yesbuild can know what files
    * to track, and when to re-execute the action.
    */
   constructor() {}
 
-  abstract execute(ctx: ExecutionContext): Promise<void>
-
-  public async __execute(ctx: ExecutionContext) {
-    await this.execute(ctx);
-    for (const cc of this.continuations) {
-      cc(this);
-    }
-    this.continuations.length = 0;
-  }
+  public execute(ctx: ExecutionContext): Promise<void> | void {}
 
   /**
    * The params is the `config` of this action, and it's persistent.
@@ -42,7 +32,7 @@ export abstract class ActionExecutor {
    * When the action is re-construct, it will be passed form
    * the constructor, so the action can be rebuilt.
    */
-  getParams(): any | undefined | void { }
+  abstract getParams(): any | undefined | void;
 
 }
 

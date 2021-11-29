@@ -13,7 +13,7 @@ export class CopyFromExecutor extends ActionExecutor {
   }
 
   // only copy when configure
-	public async execute(ctx: ExecutionContext) {
+	public execute(ctx: ExecutionContext) {
     if (ctx.stage !== Stage.Configure) {
       return;
     }
