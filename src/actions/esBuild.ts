@@ -3,13 +3,19 @@ import {
 	build as esbuild,
 	BuildOptions as EsBuildOptions,
 	Metafile as EsMetaFile,
+	Format as EsFormat,
+	Platform as EsPlatform,
 } from 'esbuild';
 import type { OutputLog } from '../logger';
 
 export interface BuildOptions {
-	entry: string,
-	platform: string,
+	entryPoints: string[],
+	platform?: EsPlatform,
+	bundle?: boolean
+	format?: EsFormat,
+	splitting?: boolean,
 	outdir?: string,
+  sourcemap?: boolean | 'inline' | 'external' | 'both';
 	external?: string[],
 }
 
@@ -24,19 +30,27 @@ export class EsbuildBundleExecutor extends ActionExecutor {
 	}
 
 	public async execute(ctx: ExecutionContext) {
-		const { entry, platform, external } = this.options;
+		const {
+			entryPoints,
+			bundle,
+			platform,
+			format,
+			splitting,
+			sourcemap,
+			external,
+		} = this.options;
 		const { taskDir } = ctx;
 		const esBuildOptions: EsBuildOptions = {
-			entryPoints: [entry],
-			bundle: true,
-			format: 'esm',
-			logLevel: 'error',
-			splitting: true,
-			outdir: taskDir,
-			sourcemap: true,
-			platform: platform as any,
-			metafile: true,
+			entryPoints,
+			bundle,
+			format,
+			splitting,
+			sourcemap,
+			platform,
 			external,
+			logLevel: 'error',
+			outdir: taskDir,
+			metafile: true,
 			plugins: []
 		};
 

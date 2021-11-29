@@ -1,4 +1,4 @@
-import yesbuild, { useBuild, useTypeScript, useParallel } from './dist';
+import yesbuild, { uesEsBuild, useTypeScript, useParallel } from './dist';
 
 yesbuild.registerTask('tsc', () => {
   useTypeScript({
@@ -13,9 +13,11 @@ yesbuild.registerTask('tsc', () => {
 });
 
 yesbuild.registerTask('esbuild', () => {
-  useBuild({
-    entry: 'src/index.ts',
+  uesEsBuild({
+    entryPoints: ['src/index.ts'],
+    bundle: true,
     platform: 'node',
+    sourcemap: true,
     external: ['typescript']
   });
 });

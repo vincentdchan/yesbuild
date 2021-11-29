@@ -18,7 +18,7 @@ export function useServeDir(): string {
   return join(buildDir, 'files');
 }
 
-export function useBuild(options: BuildOptions): void {
+export function uesEsBuild(options: BuildOptions): void {
   const builder = useYesbuildContext();
   const actionExecutor = new EsbuildBundleExecutor(options);
 
