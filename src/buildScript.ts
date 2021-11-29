@@ -139,7 +139,6 @@ interface TaskCollectorContinuation {
   lastResult?: ActionResult;
 }
 
-
 class ScriptTaskRunner {
 
   private __continuation: TaskCollectorContinuation | undefined = undefined;
@@ -148,13 +147,12 @@ class ScriptTaskRunner {
   private __taskDir: string;
 
   public constructor(
-    private graph: BuildGraph,
-    private registry: RegistryContext,
-    private buildDir: string,
+    private runner: ScriptRunner,
     private taskName: string,
     private taskNode: TaskNode,
   ) {
-    this.__taskDir = path.join(this.buildDir, this.taskName);
+    const { buildDir } = runner;
+    this.__taskDir = path.join(buildDir, this.taskName);
   }
 
   get taskDir() {
@@ -162,7 +160,7 @@ class ScriptTaskRunner {
   }
 
   public async run() {
-    const task = this.registry.tasks.get(this.taskName);
+    const task = this.runner.registry.tasks.get(this.taskName);
     if (!task) {
       throw new Error(`Collecting depencencies failed: task '${this.taskName}' not found`);
     }
@@ -206,7 +204,7 @@ class ScriptTaskRunner {
     const actionIndex = this.taskNode.actions.length;
     this.taskNode.actions.push(store);
 
-    const { buildDir } = this;
+    const { buildDir } = this.runner;
 
     const executeContext: ExecutionContext = {
       stage: Stage.Configure,
@@ -249,9 +247,9 @@ export let runningTaskRunner: ScriptTaskRunner | undefined = undefined;
 class ScriptRunner {
 
   public constructor(
-    private graph: BuildGraph,
-    private registry: RegistryContext,
-    private buildDir: string,
+    public readonly graph: BuildGraph,
+    public readonly registry: RegistryContext,
+    public readonly buildDir: string,
   ) {}
 
   public run(): Promise<void> {
@@ -269,7 +267,7 @@ class ScriptRunner {
    */
   private __executeTaskToCollectDeps(taskName: string): Promise<void> {
     const taskNode = getOrNewTaskNode(this.graph, taskName);
-    const taskRunner = new ScriptTaskRunner(this.graph, this.registry, this.buildDir, taskName, taskNode);
+    const taskRunner = new ScriptTaskRunner(this, taskName, taskNode);
     return taskRunner.run();
   }
 
