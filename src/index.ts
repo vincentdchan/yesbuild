@@ -1,9 +1,10 @@
 import cac from 'cac';
 import configure, { ConfigOptions } from './configure';
 import { build, BuildOptions } from './build';
-import registry, { TaskCallback } from './registry';
+import registry, { TaskCallback, ActionResult, ActionExecutorGenerator } from './registry';
 import { startServer } from './server';
 import logger, { LogMode } from './logger';
+import { FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
 
 const cli = cac();
 
@@ -35,11 +36,13 @@ cli
   .option('--log <log>', 'Log type')
   .option('--ignore-meta', 'Do NOT check the original config file')
   .action((builddir, options) => {
+    let flags = 0;
+    flags |= options.force ? FLAGS_FORCE_UPDATE : 0;
+    flags |= options.ignoreMeta ? FLAGS_IGNORE_META : 0;
     const buildOptions: BuildOptions = {
       buildDir: builddir,
       task: options.task,
-      forceUpdate: options.force,
-      ignoreMeta: options.ignoreMeta,
+      flags,
     };
     if (options.log === 'json') {
       logger.mode = LogMode.Data;
@@ -82,5 +85,5 @@ export {
   getAction,
 } from './actions';
 export { useYesbuildContext } from './context';
-export { TaskCallback, ConfigOptions };
+export { TaskCallback, ConfigOptions, ActionResult, ActionExecutorGenerator };
 export default registry;

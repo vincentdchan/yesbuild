@@ -1,5 +1,4 @@
 import { useYesbuildContext } from "./context";
-import { join } from 'path';
 import {
   ActionExecutor,
   EsbuildBundleExecutor,
@@ -7,16 +6,15 @@ import {
   TypeScriptExecutor,
   ParallelExecutor,
   TypeScriptBuildOptions,
+  CopyFromExecutor,
+  AnotherTask,
+  DevServerOptions,
+  DevServer,
 } from './actions';
 
-export function useBuildDir(): string {
+export function useTaskDir(): string {
   const builder = useYesbuildContext();
-  return builder.buildDir;
-}
-
-export function useServeDir(): string {
-  const buildDir = useBuildDir();
-  return join(buildDir, 'files');
+  return builder.taskDir;
 }
 
 export function uesEsBuild(options: BuildOptions): ActionExecutor {
@@ -31,4 +29,16 @@ export function useParallel(tasks: string[]): ActionExecutor {
   return new ParallelExecutor(tasks);
 }
 
-export { BuildOptions }
+export function useCopyFrom(files: string | string[]): ActionExecutor {
+  return new CopyFromExecutor(files);
+}
+
+export function useTask(taskName: string): ActionExecutor {
+  return new AnotherTask(taskName);
+}
+
+export function useDevServer(options: DevServerOptions = {}): ActionExecutor {
+  return new DevServer(options);
+}
+
+export { BuildOptions, DevServerOptions }

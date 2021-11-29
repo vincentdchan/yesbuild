@@ -1,20 +1,11 @@
 import { DependencyBuilder } from '../dependency';
-import { OutputLog } from '../output';
-
-const INTERNAL_ACTIONS = [
-  'esbuild',
-  'typescript',
-  'parallel',
-];
-
-export function validateActionName(name: string) {
-  const contain = INTERNAL_ACTIONS.includes(name);
-  if (!contain) {
-    throw new Error(`Action is invalid: ${name}`);
-  }
-}
+import { OutputBuilder } from '../output';
+import { Stage } from '../flags';
 
 export interface ExecutionContext {
+  stage: Stage,
+  depsBuilder: DependencyBuilder,
+  outputBuilder: OutputBuilder,
   buildDir: string,
 	taskDir: string,
   forceUpdate: boolean,
@@ -26,18 +17,22 @@ export interface ExecutionContext {
  */
 export abstract class ActionExecutor {
 
-  public readonly dependencyBuilder: DependencyBuilder = new DependencyBuilder();
-
-  constructor() {}
-
-  abstract execute(ctx: ExecutionContext): Promise<void>
+  public readonly continuations: ((self: ActionExecutor) => void)[] = [];
 
   /**
    * Return the outputs files so yesbuild can know what files
    * to track, and when to re-execute the action.
    */
-  getOutputs(): OutputLog[] {
-    return [];
+  constructor() {}
+
+  abstract execute(ctx: ExecutionContext): Promise<void>
+
+  public async __execute(ctx: ExecutionContext) {
+    await this.execute(ctx);
+    for (const cc of this.continuations) {
+      cc(this);
+    }
+    this.continuations.length = 0;
   }
 
   /**

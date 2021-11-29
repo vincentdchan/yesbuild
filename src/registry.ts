@@ -1,13 +1,28 @@
-import { validateActionName, ActionExecutor } from './actions';
-import { isUndefined } from 'lodash-es';
+import { join } from 'path';
+import { ActionExecutor, ExecutionContext } from './actions';
+import { isUndefined, isFunction } from 'lodash-es';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
-import { newYesbuildContext } from "./context";
+import type { OutputLog } from './output';
+import { newYesbuildContext, YesbuildContext } from "./context";
+import { Stage } from './flags';
+import { runActionOfTask } from './build';
 
-export type TaskCallback = () => ActionExecutor;
+export interface ActionResult {
+  outputs?: OutputLog[];
+}
+
+export type ActionExecutorGenerator = Generator<ActionExecutor, ActionExecutor | void, ActionResult>;
+export type TaskCallback = () => ActionExecutor | ActionExecutorGenerator | void;
 
 interface Task {
   name: string,
   userCallback: TaskCallback;
+}
+
+interface TaskCollectorContinuation {
+  ctx: YesbuildContext;
+  generator: ActionExecutorGenerator;
+  lastResult?: ActionResult;
 }
 
 function getOrNewTaskNode(graph: BuildGraph, taskName: string): TaskNode {
@@ -23,6 +38,7 @@ function getOrNewTaskNode(graph: BuildGraph, taskName: string): TaskNode {
 export class RegistryContext {
 
   private __tasks: Map<string, Task> = new Map();
+  private __taskContinuations: Map<string, TaskCollectorContinuation> = new Map();
 
   public constructor() {}
 
@@ -34,7 +50,7 @@ export class RegistryContext {
     this.__tasks.set(name, task);
   }
 
-  public executeTaskToCollectDeps(graph: BuildGraph, buildDir: string, taskName?: string) {
+  public executeTaskToCollectDeps(graph: BuildGraph, buildDir: string, taskName?: string): Promise<void> {
     if (isUndefined(taskName)) {
       return this.__executeAllTasks(graph, buildDir);
     }
@@ -42,39 +58,77 @@ export class RegistryContext {
     return this.__executeTaskToCollectDeps(graph, buildDir, taskName);
   }
 
+  private async __executeAllTasks(graph: BuildGraph, buildDir: string): Promise<void> {
+    for (const [key] of this.__tasks) {
+      await this.__executeTaskToCollectDeps(graph, buildDir, key);
+    }
+  }
+
   /**
    * Set a global dependency collector to collects dependencies
    */
-  private __executeTaskToCollectDeps(graph: BuildGraph, buildDir: string, taskName: string) {
+  private async __executeTaskToCollectDeps(graph: BuildGraph, buildDir: string, taskName: string): Promise<void> {
     const taskNode = getOrNewTaskNode(graph, taskName);
-    const builder = newYesbuildContext(graph, buildDir, taskNode);
+    const taskDir = join(buildDir, taskName);
+    const ctx = newYesbuildContext(graph, taskDir, taskNode);
     const task = this.__tasks.get(taskName);
     if (!task) {
       throw new Error(`Collecting depencencies failed: task '${taskName}' not found`);
     }
 
     // call the user method to collect deps
-    const actionExecutor = task.userCallback.call(undefined);
+    const actionExecutor = task.userCallback();
     if (actionExecutor instanceof ActionExecutor) {
-      builder.actions.push(actionExecutor);
-    }
-
-    builder.finalize();
-
-    for (const actionExecutor of builder.actions) {
-      const params = actionExecutor.getParams();
-      const store: ActionStore = {
-        name: (actionExecutor.constructor as any).actionName,
-        params,
-      }
-      validateActionName(store.name);
-      taskNode.actions.push(store);
+      await this.__testActionExecutor(ctx, actionExecutor, buildDir, taskNode, taskName);
+      ctx.finalize();
+    } else if (actionExecutor && isFunction(actionExecutor.next)) {
+      this.__taskContinuations.set(taskName, {
+        ctx,
+        generator: actionExecutor,
+      });
+      return this.__testActionExecutorGenerator(actionExecutor, buildDir, taskNode, taskName);
     }
   }
 
-  private __executeAllTasks(graph: BuildGraph, buildDir: string) {
-    for (const [key] of this.__tasks) {
-      this.__executeTaskToCollectDeps(graph, buildDir, key);
+  private __testActionExecutor(ctx: YesbuildContext, executor: ActionExecutor, buildDir: string, taskNode: TaskNode, taskName: string): Promise<void> {
+    const params = executor.getParams();
+    const store: ActionStore = {
+      name: (executor.constructor as any).actionName,
+      params,
+    }
+    const actionIndex = taskNode.actions.length;
+    taskNode.actions.push(store);
+
+    const { depsBuilder, outputsBuilder } = ctx;
+
+    const executeContext: ExecutionContext = {
+      stage: Stage.Configure,
+      buildDir,
+      depsBuilder,
+      outputBuilder: outputsBuilder,
+      taskDir: join(buildDir, taskName),
+      forceUpdate: false,
+    };
+    return runActionOfTask(executeContext, taskName, taskNode, actionIndex);
+  }
+
+  private async __testActionExecutorGenerator(generator: ActionExecutorGenerator, buildDir: string, taskNode: TaskNode, taskName: string): Promise<void> {
+    const continuation = this.__taskContinuations.get(taskName);
+    const { lastResult, ctx } = continuation;
+    const next = generator.next(lastResult);
+
+    if (next.value instanceof ActionExecutor) {
+      await this.__testActionExecutor(ctx, next.value, buildDir, taskNode, taskName);
+      ctx.addDeps(taskNode.deps);
+      continuation.lastResult = {
+        outputs: ctx.outputsBuilder.finalize(),
+      };
+    }
+
+    if (next.done) {
+      ctx.finalize();
+    } else {
+      this.__testActionExecutorGenerator(generator, buildDir, taskNode, taskName);
     }
   }
 

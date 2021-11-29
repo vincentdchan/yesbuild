@@ -1,4 +1,4 @@
-import { createServer } from 'http';
+import Koa from 'koa';
 
 export interface ServerOptions {
   buildDir?: string;
@@ -6,7 +6,7 @@ export interface ServerOptions {
 }
 
 export function startServer(options: ServerOptions) {
-  const server = createServer();
+  const app = new Koa();
   const { port } = options;
-  server.listen(port);
+  app.listen(port);
 }

@@ -4,7 +4,6 @@ import * as path from 'path';
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import ts from 'typescript';
 import * as tsconfig from 'tsconfig';
-import { OutputLog } from '../output';
 
 function fileExists(fileName: string) {
   return ts.sys.fileExists(fileName);
@@ -34,7 +33,6 @@ export class TypeScriptExecutor extends ActionExecutor {
   public static actionName: string = 'typescript'
   private __program: ts.Program;
   private __config: any;
-  private __outputs: OutputLog[] = [];
 
   public constructor(private options: TypeScriptBuildOptions) {
     super();
@@ -47,7 +45,7 @@ export class TypeScriptExecutor extends ActionExecutor {
     const configFile = ts.findConfigFile(process.cwd(), fileExists);
     if (!isUndefined(configFile)) {
       this.__config = tsconfig.readFileSync(configFile);
-      this.dependencyBuilder.dependFile(configFile);
+      ctx.depsBuilder.dependFile(configFile);
     }
 
     let options: ts.CompilerOptions = {};
@@ -76,37 +74,29 @@ export class TypeScriptExecutor extends ActionExecutor {
     });
 
     this.__program.emit(undefined, undefined, undefined, true);
-    this.__scanOutputs(taskDir);
+    this.__scanOutputs(ctx, taskDir);
 
     const currentDir = process.cwd();
     const sourceFiles = this.__program.getSourceFiles();
     for (const src of sourceFiles) {
       const { fileName } = src;
       const relativePath = path.relative(currentDir, fileName);
-      this.dependencyBuilder.dependFile(relativePath);
+      ctx.depsBuilder.dependFile(relativePath);
     }
   }
 
-  private __scanOutputs(dir: string) {
+  private __scanOutputs(ctx: ExecutionContext, dir: string) {
     const children = fs.readdirSync(dir);
-    const currentDir = process.cwd();
 
     for (const child of children) {
       const childPath = path.join(dir, child);
       const stat = fs.statSync(childPath);
       if (stat.isFile() && /(.+)\.d\.ts/.test(child)) {
-        this.__outputs.push({
-          file: path.relative(currentDir, childPath),
-          size: stat.size,
-        });
+        ctx.outputBuilder.push(childPath, stat.size);
       } else if (stat.isDirectory()) {
-        this.__scanOutputs(childPath);
+        this.__scanOutputs(ctx, childPath);
       }
     }
-  }
-
-  getOutputs() {
-    return this.__outputs;
   }
 
   getParams() {

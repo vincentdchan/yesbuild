@@ -3,6 +3,7 @@ import { fork } from 'child_process';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import logger from '../logger';
+import { Stage } from '../flags';
 
 /**
  * child process's data will print to stderr
@@ -31,10 +32,13 @@ export class ParallelExecutor extends ActionExecutor {
 
   public constructor(private tasks: string[]) {
     super();
-    this.dependencyBuilder.addDep('*');
   }
 
   async execute(ctx: ExecutionContext) {
+    if (ctx.stage === Stage.Configure) {
+      ctx.depsBuilder.addDep('*');
+      return;
+    }
     await this.__executeAll(ctx);
   }
 
