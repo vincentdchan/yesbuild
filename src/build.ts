@@ -1,6 +1,6 @@
-import { join } from 'path';
+import { join, resolve } from 'path';
 import * as fs from 'fs';
-import { green, red, cyan } from 'chalk';
+import { green, red, cyan, grey } from 'chalk';
 import { isArray } from 'lodash-es';
 import { config, ConfigOptions } from './configProject';
 import { Deps, DependenciesChangedCell } from './dependency';
@@ -19,7 +19,9 @@ export async function build(options: BuildOptions) {
   const { buildDir, task: taskName, forceUpdate } = options;
   const ymlPath = makeTaskYmlFilename(buildDir, taskName);
   if (!fs.existsSync(ymlPath)) {
-    throw new Error(`${ymlPath} not exists, task ${taskName} can not build`);
+    logger.panic(`Error: ${cyan(ymlPath)} not exists, task ${green(taskName)} can not build.
+Is the directory ${grey(resolve(buildDir))} correct?`);
+		return;
   }
 
   const graph = await BuildGraph.loadPartialFromYml(ymlPath);

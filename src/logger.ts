@@ -44,19 +44,19 @@ export class Logger {
 		this.__endTime = performance.now();
 		const delta = this.__endTime - this.__beginTime;
 		if (this.mode === LogMode.Readable) {
-			return this.__prettyPrint(delta);
-		}
-
-		const data = {
-			outputs: this.__output,
-			delta,
-			taskCount: this.__taskCounter,
-			updatedYmlFiles: this.__updatedYmlFiles,
-		};
-		try {
-			process.send(data);
-		} catch (err) {
-			console.error(data);
+			this.__prettyPrint(delta);
+		} else {
+			const data = {
+				outputs: this.__output,
+				delta,
+				taskCount: this.__taskCounter,
+				updatedYmlFiles: this.__updatedYmlFiles,
+			};
+			try {
+				process.send(data);
+			} catch (err) {
+				console.error(data);
+			}
 		}
 
 		process.exit(exitCode);
@@ -96,7 +96,7 @@ export class Logger {
 	private __prettyPrint(delta: number) {
 		if (this.__errors.length > 0) {
 			for (const err of this.__errors) {
-				console.log(err);
+				console.log(err.message);
 			}
 			return;
 		}

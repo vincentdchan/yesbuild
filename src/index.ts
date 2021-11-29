@@ -17,10 +17,13 @@ cli
       buildDir: options.outdir,
     };
 
-    config(configOptions).catch(err => {
-      console.error(err);
-      process.exit(1);
-    });
+    config(configOptions)
+      .then(() => {
+        logger.printAndExit()
+      })
+      .catch(err => {
+        logger.panic(err.toString())
+      });
   })
 
 cli
@@ -64,7 +67,11 @@ cli
 
 cli.help();
 
-cli.parse();
+try {
+  cli.parse();
+} catch (err) {
+  logger.panic(err.toString());
+}
 
 export * from './hooks';
 export {
