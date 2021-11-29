@@ -103,6 +103,7 @@ async function runTask(task: TaskNode, taskName: string, options: RunTaskOptions
 }
 
 async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, forceUpdate: boolean, changedCell?: DependenciesChangedCell) {
+	buildDir = resolve(buildDir);
   for (const rawAction of taskNode.actions) {
     const { name, params } = rawAction;
     const actionCtor = getAction(name);

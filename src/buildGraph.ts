@@ -171,6 +171,10 @@ export class BuildGraph {
       files.push(testResult);
     }
 
+    if (files.length === 0) {
+      return undefined;
+    }
+
     const [filename, latestTime] = findLatestTimeOfOutput(files);
     if (latestTime > mtimeMs) {
       console.log('return ', filename);
@@ -293,6 +297,9 @@ export class BuildGraph {
 
   private __checkFileDeps(collector: DependenciesCollector, filename: string, taskNames: string[]) {
     const outputs = this.__getAllOutputsOfTaskNames(taskNames);
+    if (outputs.length === 0) {
+      return;
+    }
     const [, latestTime] = findLatestTimeOfOutput(outputs);
     let changed: boolean = false;
     try {

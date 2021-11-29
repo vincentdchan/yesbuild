@@ -2,7 +2,7 @@ import yesbuild, { useBuild, useTypeScript, useParallel } from './dist';
 
 yesbuild.registerTask('tsc', () => {
   useTypeScript({
-    entries: [
+    rootNames: [
       'src/index.ts',
     ],
     compilerOptions: {
