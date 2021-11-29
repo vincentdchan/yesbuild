@@ -28,6 +28,8 @@ function friendlySize(bytes: number): string {
   }
 }
 
+export type ExitCallback = (exitCode: number) => void;
+
 /**
  * Only the main process print readable log to stdout.
  * 
@@ -43,6 +45,9 @@ export class Logger {
   private __beginTime: number;
   private __endTime: number;
   private __taskCounter: number = 0;
+  private __exit: ExitCallback = (exitCode: number) => {
+    process.exit(exitCode);
+  }
 
   constructor() {
     this.__endTime = this.__beginTime = performance.now();
@@ -71,7 +76,11 @@ export class Logger {
       }
     }
 
-    process.exit(exitCode);
+    this.__exit(exitCode);
+  }
+
+  public registerExitCallback(callback: ExitCallback) {
+    this.__exit = callback;
   }
 
   public mergesOutput(objs: any) {

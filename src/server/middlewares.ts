@@ -1,9 +1,11 @@
 import Koa from 'koa';
 import send from 'koa-send';
 import { resolve } from 'path';
+import { isUndefined } from 'lodash-es';
+import type { KoaContext, YesContext } from './index';
 
-export function serveStatic(serveDir: string): Koa.Middleware {
-	return async (ctx, next) => {
+export function serveStatic(serveDir: string): Koa.Middleware<Koa.DefaultState, YesContext> {
+	return async (ctx: KoaContext, next) => {
 		await next();
 		if (ctx.method !== 'HEAD' && ctx.method !== 'GET') return;
 		// response is already handled
@@ -14,9 +16,13 @@ export function serveStatic(serveDir: string): Koa.Middleware {
 				root: resolve(serveDir),
 			});
     } catch (err) {
-      if (err.status !== 404) {
-        throw err
-      }
+			const path = ctx.request.path.slice(1);  // remove '/'
+			const fullPath = ctx.serverContext.tryGetProduct(path);
+			if (isUndefined(fullPath)) {
+				throw err
+			}
+
+			await send(ctx, fullPath);
     }
 	}
 }

@@ -35,8 +35,8 @@ export class ParallelExecutor extends ActionExecutor {
   }
 
   async execute(ctx: ExecutionContext) {
+		ctx.depsBuilder.addDep('*');
     if (ctx.stage === Stage.Configure) {
-      ctx.depsBuilder.addDep('*');
       return;
     }
     await this.__executeAll(ctx);

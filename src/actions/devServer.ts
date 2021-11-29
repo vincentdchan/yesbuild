@@ -3,6 +3,7 @@ import { isString, isUndefined } from 'lodash-es';
 import { Stage } from '../flags';
 import { Outputs } from '../output';
 import * as fs from 'fs';
+import logger from '../logger';
 import { startServer, InternalServerOptions } from '../server';
 
 export interface DevServerOptions {
@@ -47,13 +48,19 @@ export class DevServer extends ActionExecutor {
 
 	public execute(ctx: ExecutionContext) {
     const { taskDir } = ctx;
+    ctx.depsBuilder.addDep('*');
     if (ctx.stage === Stage.Configure) {
-      ctx.depsBuilder.addDep('*');
       fs.mkdirSync(taskDir, { recursive: true });
       return;
     }
 
-    startServer(taskDir, this.__options);
+    // start server when everything is done
+    logger.registerExitCallback((exitCode: number) => {
+      if (exitCode !== 0) {
+        process.exit(exitCode);
+      }
+      startServer(taskDir, this.__options);
+    })
   }
 
   public getParams() {
