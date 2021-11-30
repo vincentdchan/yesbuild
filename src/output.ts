@@ -9,20 +9,20 @@ export type Outputs = OutputLog[];
 
 export class OutputBuilder {
 
-  private __currentDir: string;
-  private __outputs: Outputs = [];
+  #currentDir: string;
+  #outputs: Outputs = [];
 
   constructor() {
-    this.__currentDir = process.cwd();
+    this.#currentDir = process.cwd();
   }
 
   public push(filename: string, size: number) {
-    const file = path.relative(this.__currentDir, filename);
-    this.__outputs.push({ file, size });
+    const file = path.relative(this.#currentDir, filename);
+    this.#outputs.push({ file, size });
   }
 
   public finalize(): Outputs {
-    return this.__outputs;
+    return this.#outputs;
   }
 
 }

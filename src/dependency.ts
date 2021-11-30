@@ -44,41 +44,41 @@ const ALLOW_LOCKS = [
  */
 export class DependencyBuilder {
 
-  private __deps: Dependencies = undefined;
-  private __hasDepentLock: boolean = false;
+  #deps: Dependencies = undefined;
+  #hasDepentLock: boolean = false;
 
   public constructor() {}
 
   public addDep(literal: string) {
-    if (this.__deps === '*') {
+    if (this.#deps === '*') {
       return;
     }
     if (literal === '*') {
-      this.__deps = '*';
+      this.#deps = '*';
       return;
     }
-    if (isUndefined(this.__deps)) {
-      this.__deps = [];
+    if (isUndefined(this.#deps)) {
+      this.#deps = [];
     }
-    this.__deps.push(literal);
+    this.#deps.push(literal);
   }
 
   public dependFile(path: string) {
-    if (/^node_modules/.test(path) && this.__tryDependNpmLock()) {
+    if (/^node_modules/.test(path) && this.#tryDependNpmLock()) {
       return;
     }
     this.addDep(makeFileDep(path));
   }
 
-  private __tryDependNpmLock(): boolean {
-    if (this.__hasDepentLock) {
+  #tryDependNpmLock(): boolean {
+    if (this.#hasDepentLock) {
       return true;
     }
 
     for (const name of ALLOW_LOCKS) {
       if (fs.existsSync(name)) {
         this.addDep(makeFileDep(name));
-        this.__hasDepentLock = true;
+        this.#hasDepentLock = true;
         return true;
       }
     }
@@ -91,10 +91,10 @@ export class DependencyBuilder {
   }
 
   public finalize(): Dependencies {
-    if (isArray(this.__deps)) {
-      return this.__deps.sort();
+    if (isArray(this.#deps)) {
+      return this.#deps.sort();
     } else {
-      return this.__deps;
+      return this.#deps;
     }
   }
 

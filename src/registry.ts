@@ -35,20 +35,20 @@ export class RegistryContext {
  */
 class Registry {
 
-  private __ctx: RegistryContext = new RegistryContext();
+  #ctx: RegistryContext = new RegistryContext();
 
   public constructor() {}
 
   public defineTask(name: string, callback: TaskCallback) {
-    this.__ctx.defineTask(name, callback);
+    this.#ctx.defineTask(name, callback);
   }
 
   /**
    * return the old context, create new one
    */
   public takeContext() {
-    const result = this.__ctx;
-    this.__ctx = new RegistryContext();
+    const result = this.#ctx;
+    this.#ctx = new RegistryContext();
     return result;
   }
 

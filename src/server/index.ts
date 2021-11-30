@@ -24,6 +24,6 @@ export function startServer(staticDir: string, options: InternalServerOptions) {
   });
   app.use(serveStatic(staticDir));
   const { host, port } = options;
-  console.log(`Listening on ${grey(host + ':' + port)}`)
+  console.log(`Listening on ${grey('http://' + host + ':' + port)}`)
   app.listen(port);
 }
