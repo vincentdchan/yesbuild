@@ -15,7 +15,7 @@ export interface DevServerOptions {
 
 export class DevServer extends ActionExecutor {
 
-  public static actionName: string = 'devServer';
+  public static actionName: string = 'internal:devServer';
   private __options: InternalServerOptions;
 
   public constructor(options: DevServerOptions) {

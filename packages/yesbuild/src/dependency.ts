@@ -67,6 +67,9 @@ export class DependencyBuilder {
     if (/^node_modules/.test(path) && this.#tryDependNpmLock()) {
       return;
     }
+    if (path.startsWith('./')) {
+      path = path.slice(2);
+    }
     this.addDep(makeFileDep(path));
   }
 

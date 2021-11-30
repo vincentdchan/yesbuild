@@ -28,7 +28,7 @@ function forkAsync(command: string, args: string[]): Promise<any | undefined> {
 
 export class ParallelExecutor extends ActionExecutor {
 
-  public static actionName: string = 'parallel';
+  public static actionName: string = 'internal:parallel';
 
   public constructor(private tasks: string[]) {
     super();

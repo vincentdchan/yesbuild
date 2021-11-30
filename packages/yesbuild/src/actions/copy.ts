@@ -12,13 +12,12 @@ export interface CopyExecutorOptions {
 
 export class CopyExecutor extends ActionExecutor {
 
-	public static actionName: string = 'copy'
+	public static actionName: string = 'internal:copy'
   private __src: string | string[];
   private __dest?: string;
 
   public constructor(private options: CopyExecutorOptions) {
     super();
-    console.log(this.options);
     this.__src = options.src;
     this.__dest = options.dest;
   }

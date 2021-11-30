@@ -20,7 +20,7 @@ export interface BuildOptions {
 
 export class EsbuildBundleExecutor extends ActionExecutor {
 
-  public static actionName: string = 'esbuild'
+  public static actionName: string = 'internal:esbuild'
 
   public constructor(private options: BuildOptions) {
     super();

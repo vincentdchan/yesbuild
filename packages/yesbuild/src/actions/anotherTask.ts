@@ -3,7 +3,7 @@ import { Stage } from '../flags';
 
 export class AnotherTask extends ActionExecutor {
 
-	public static actionName: string = 'anotherTask';
+	public static actionName: string = 'internal:anotherTask';
 
   constructor(private taskName: string) {
     super();
