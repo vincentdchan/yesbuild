@@ -19,11 +19,15 @@ function cleanFilesInDir(dir: string) {
 
   for (const child of children) {
     const childPath = path.join(dir, child);
-    const stat = fs.statSync(childPath);
-    if (stat.isFile() && /(.+)\.d\.ts/.test(child)) {
-      fs.rmSync(childPath);
-    } else if (stat.isDirectory()) {
-      cleanFilesInDir(childPath);
+    try {
+      const stat = fs.statSync(childPath);
+      if (stat.isFile() && /(.+)\.d\.ts/.test(child)) {
+        fs.rmSync(childPath);
+      } else if (stat.isDirectory()) {
+        cleanFilesInDir(childPath);
+      }
+    } catch (err) {
+      // remove failed, ignore it
     }
   }
 }

@@ -25,7 +25,8 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
     return;
   }
 
-  const graph = BuildGraph.loadPartialFromYml(ymlPath);
+  const graph = new BuildGraph();
+  graph.loadPartialFromYml(ymlPath);
 
   let changedDepOfMeta: string | undefined = undefined
   if (!(flags & FLAGS_IGNORE_META) && (changedDepOfMeta = graph.needsReconfig(buildDir))) {

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import chokidar from 'chokidar';
 import { resolve } from 'path';
-import { green, grey, cyan } from 'chalk';
+import { green, grey, cyan, red } from 'chalk';
 import { fork, ChildProcess } from 'child_process';
 import { isUndefined, debounce } from 'lodash-es';
 import { performance } from 'perf_hooks';
@@ -12,12 +12,21 @@ class WatchContext {
 
   private __fileDeps: Set<string>;
   private __prevProcess: ChildProcess | undefined = undefined;
+  private __ymlPath: string;
 
   public constructor(
     public readonly graph: BuildGraph,
     public readonly buildDir: string,
     public readonly taskName: string,
-  ) {}
+  ) {
+    this.__ymlPath = makeTaskYmlFilename(buildDir, taskName);
+    if (!fs.existsSync(this.__ymlPath)) {
+      logger.panic(`Error: ${cyan(this.__ymlPath)} not exists, task ${green(taskName)} can not build.
+  Is the directory ${grey(resolve(buildDir))} correct?`);
+    }
+
+    this.partialReloadGraphFromYml();
+  }
 
   public collectFileDepsByEntry(entry: string) {
     const fileDeps = this.graph.collectAllFilesDeps(entry);
@@ -32,6 +41,7 @@ class WatchContext {
     if (isUndefined(this.__prevProcess)) {
       return;
     }
+    console.log(`Previous build ${red(this.taskName)} hasn't finished, kill it`);
     this.__prevProcess.kill();
     this.__prevProcess = undefined;
   }
@@ -77,6 +87,11 @@ class WatchContext {
     if (this.__prevProcess === child) {
       this.__prevProcess = undefined;
     }
+    this.partialReloadGraphFromYml();
+  }
+
+  public partialReloadGraphFromYml() {
+    this.graph.loadPartialFromYml(this.__ymlPath);
   }
 
 }
@@ -88,14 +103,7 @@ export interface WatchOptions {
 
 export function watch(options: WatchOptions) {
   const { buildDir, taskName } = options;
-  const ymlPath = makeTaskYmlFilename(buildDir, taskName);
-  if (!fs.existsSync(ymlPath)) {
-    logger.panic(`Error: ${cyan(ymlPath)} not exists, task ${green(taskName)} can not build.
-Is the directory ${grey(resolve(buildDir))} correct?`);
-    return;
-  }
-
-  const graph = BuildGraph.loadPartialFromYml(ymlPath);
+  const graph = new BuildGraph();
   const context = new WatchContext(graph, buildDir, taskName);
 
   const taskNode = graph.tasks.get(taskName);

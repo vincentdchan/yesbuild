@@ -58,8 +58,8 @@ class DependenciesCollector {
   public readonly taskDeps: Map<string, string[]> = new Map();
   public readonly taskNamesToUpdate: Set<string> = new Set();
 
-  public constructor() {}
-  
+  public constructor() { }
+
   public pushFileDepForTask(taskName: string, content: string) {
     let sources: string[] = this.fileDeps.get(content);
     if (!sources) {
@@ -92,16 +92,24 @@ class DependenciesCollector {
 
 }
 
-function findLatestTimeOfOutput(outputs: string[]): [string, number] {
-	const times: [string, number][] = [];
+function findLatestTimeOfOutput(outputs: string[]): [string, number] | '*' | undefined {
+  if (outputs.length === 0) {
+    return undefined;
+  }
 
-	for (const output of outputs) {
-		const stat = fs.statSync(output);
-		const { mtimeMs } = stat;
-		times.push([output, mtimeMs]);
-	}
+  const times: [string, number][] = [];
 
-	return maxBy(times, ([, time]) => time);
+  for (const output of outputs) {
+    try {
+      const stat = fs.statSync(output);
+      const { mtimeMs } = stat;
+      times.push([output, mtimeMs]);
+    } catch (err) {
+      return '*';
+    }
+  }
+
+  return maxBy(times, ([, time]) => time);
 }
 
 /**
@@ -112,32 +120,28 @@ export class BuildGraph {
   public readonly tasks: Map<string, TaskNode> = new Map();
   private __metaDeps: Dependencies;
 
-  public static loadPartialFromYml(path: string): BuildGraph {
+  public loadPartialFromYml(path: string) {
     const content = fs.readFileSync(path, 'utf-8');
     const objs: any = yaml.load(content);
-    return BuildGraph.__fromJSON(objs);
+    return this.__fromJSON(objs);
   }
 
-	private static __fromJSON(objs: any): BuildGraph {
-		if (!isObjectLike(objs)) {
-			throw new Error(`ModuleGraph::__fromJSON only received object, but got ${objs}`);
-		}
-
-    const result = new BuildGraph();
+  private __fromJSON(objs: any) {
+    if (!isObjectLike(objs)) {
+      throw new Error(`ModuleGraph::__fromJSON only received object, but got ${objs}`);
+    }
 
     if (isArray(objs['tasks'])) {
       for (const task of objs['tasks']) {
         if (isObjectLike(task)) {
           const { name, ...taskNode } = task;
           if (isString(name)) {
-            result.tasks.set(name, task);
+            this.tasks.set(name, taskNode);
           }
         }
       }
     }
-
-    return result;
-	}
+  }
 
   public constructor(metaDeps: Dependencies = undefined) {
     this.__metaDeps = metaDeps;
@@ -154,7 +158,7 @@ export class BuildGraph {
    * Check if the dependencies of `yesbuild.yml` changed,
    * if changed, return the filename.
    */
-  public needsReconfig(buildDir: string): string | undefined {
+  public needsReconfig(buildDir: string): string| '*' | undefined {
     this.__loadMeta(buildDir);
     const ymlPath = makeMetaYmlFilename(buildDir);
     const stat = fs.statSync(ymlPath);
@@ -162,11 +166,11 @@ export class BuildGraph {
     return this.__checkDepsForRoot(mtimeMs);
   }
 
-  private __checkDepsForRoot(mtimeMs: number): string | undefined {
+  private __checkDepsForRoot(mtimeMs: number): string | '*' | undefined {
     if (!isArray(this.__metaDeps)) {
       return undefined;
     }
-    const files: string [] = [];
+    const files: string[] = [];
     for (const depLiteral of this.__metaDeps) {
       let testResult = testFileDep(depLiteral);
       if (!isString(testResult)) {
@@ -175,13 +179,18 @@ export class BuildGraph {
       files.push(testResult);
     }
 
-    if (files.length === 0) {
+    const findResult = findLatestTimeOfOutput(files);
+
+    if (isUndefined(findResult)) {
       return undefined;
     }
 
-    const [filename, latestTime] = findLatestTimeOfOutput(files);
+    if (findResult === '*') {
+      return '*'
+    }
+
+    const [filename, latestTime] = findResult;
     if (latestTime > mtimeMs) {
-      console.log('return ', filename);
       return filename;
     }
     return undefined;
@@ -308,10 +317,15 @@ export class BuildGraph {
 
   private __checkFileDeps(collector: DependenciesCollector, filename: string, taskNames: string[]) {
     const outputs = this.__getAllOutputsOfTaskNames(taskNames);
-    if (outputs.length === 0) {
+    const findResult = findLatestTimeOfOutput(outputs);
+    if (isUndefined(findResult)) {
       return;
     }
-    const [, latestTime] = findLatestTimeOfOutput(outputs);
+    if (findResult === '*') {
+      collector.addTaskNamesToUpdate(taskNames);
+      return;
+    }
+    const [, latestTime] = findResult;
     let changed: boolean = false;
     try {
       const stat = fs.statSync(filename);
@@ -411,7 +425,7 @@ export class BuildGraph {
 
   private __dumpFile(dir: string, taskName: string, taskNode: TaskNode): Promise<any> {
     const path = makeTaskYmlFilename(dir, taskName);
-		const objs: any = Object.create(null);
+    const objs: any = Object.create(null);
     objs['version'] = YML_VERSION;
 
     const tasks = {
@@ -419,19 +433,19 @@ export class BuildGraph {
       ...taskNode,
     }
 
-    objs['tasks'] = [ tasks ];
+    objs['tasks'] = [tasks];
 
-		const result = yaml.dump(objs);
+    const result = yaml.dump(objs);
 
     return fs.promises.writeFile(path, result);
   }
 
   private __dumpMetaFiles(dir: string): Promise<any> {
     const filename = makeMetaYmlFilename(dir);
-		const objs: any = Object.create(null);
+    const objs: any = Object.create(null);
     objs['version'] = YML_VERSION;
     objs['deps'] = this.__metaDeps;
-		const result = yaml.dump(objs);
+    const result = yaml.dump(objs);
 
     return fs.promises.writeFile(filename, result);
   }

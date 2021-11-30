@@ -30,6 +30,8 @@ function friendlySize(bytes: number): string {
 
 export type ExitCallback = (exitCode: number) => void;
 
+const MAX_PRINT_OUTPUT_SIZE = 10;
+
 function prettyPrint(errors: ErrorLog[], updatedYmlFiles: string[], output: ProductWithSize[], taskCounter: number, delta: number) {
   if (errors.length > 0) {
     for (const err of errors) {
@@ -52,13 +54,20 @@ function prettyPrint(errors: ErrorLog[], updatedYmlFiles: string[], output: Prod
     console.log()
   } else {
     output.sort((a, b) => a.size - b.size);
-    console.log(`${output.length} outputs generated.`);
+    console.log(`${output.length} files generated.`);
     const maxLenFilename = maxBy(output, o => o.file.length);
+    let counter = 0;
     for (const { file, size } of output) {
+      if (counter++ >= MAX_PRINT_OUTPUT_SIZE) {
+        console.log(grey('...'));
+        console.log(`${output.length - counter + 1} files are hidden.`)
+        break;
+      }
       console.log(`${grey(file.padEnd(maxLenFilename.file.length + 4))}${cyan(friendlySize(size))}`);
     }
     console.log();
   }
+
   console.log(`Totally ${taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
 }
 
