@@ -12,7 +12,10 @@ yesbuild.defineTask('coreType', function*() {
       'emitDeclarationOnly': true,
     },
   });
-  yield useCopy('./build/coreType/**', './packages/yesbuild/dist');
+  yield useCopy(
+    './build/coreType/**',
+    './packages/yesbuild/dist',
+    { relative: './build/coreType/' });
 });
 
 yesbuild.defineTask('tsPluginType', function*() {
@@ -25,7 +28,10 @@ yesbuild.defineTask('tsPluginType', function*() {
       'emitDeclarationOnly': true,
     },
   });
-  yield useCopy('./build/tsPluginType/**', './packages/yesbuild-typescript/dist');
+  yield useCopy(
+    './build/tsPluginType/**',
+    './packages/yesbuild-typescript/dist',
+    { relative: './build/tsPluginType/' });
 });
 
 yesbuild.defineTask('release', function*() {

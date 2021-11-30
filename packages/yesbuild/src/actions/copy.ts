@@ -7,6 +7,7 @@ import { Stage } from '../flags';
 export interface CopyExecutorOptions {
   src: string | string[];
   dest?: string;
+  options?: { relative?: string }
 }
 
 export class CopyExecutor extends ActionExecutor {
@@ -15,8 +16,9 @@ export class CopyExecutor extends ActionExecutor {
   private __src: string | string[];
   private __dest?: string;
 
-  public constructor(options: CopyExecutorOptions) {
+  public constructor(private options: CopyExecutorOptions) {
     super();
+    console.log(this.options);
     this.__src = options.src;
     this.__dest = options.dest;
   }
@@ -27,19 +29,18 @@ export class CopyExecutor extends ActionExecutor {
       return;
     }
     let sourceFiles: string [];
-    let baseDir: string;
+    let relativeDir: string;
+
+    if (this.options.options && this.options.options.relative) {
+      relativeDir = this.options.options.relative;
+    } else {
+      relativeDir = process.cwd();
+    }
+
     if (isString(this.__src)) {
       const { default: glob } = await import('glob');
-      const result = glob.sync(this.__src);
-      if (result.length === 1) {
-        sourceFiles = result;
-        baseDir = process.cwd();
-      } else {
-        baseDir = result[0];
-        sourceFiles = result.slice(1);
-      }
+      sourceFiles = glob.sync(this.__src);
     } else if (isArray(this.__src)) {
-      baseDir = process.cwd();
       sourceFiles = this.__src;
     }
 
@@ -65,7 +66,7 @@ export class CopyExecutor extends ActionExecutor {
       } catch (err) {
         continue;
       }
-      const relativePath = relative(baseDir, sourceFile);
+      const relativePath = relative(relativeDir, sourceFile);
 
       const dest = join(destDir, relativePath);
       const dir = dirname(dest);
@@ -77,10 +78,7 @@ export class CopyExecutor extends ActionExecutor {
   }
 
   getParams(): CopyExecutorOptions {
-    return {
-      src: this.__src,
-      dest: this.__dest,
-    };
+    return this.options;
   }
 
 }

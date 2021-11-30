@@ -22,8 +22,8 @@ export function useParallel(tasks: string[]): ActionExecutor {
   return new ParallelExecutor(tasks);
 }
 
-export function useCopy(files: string | string[], dest: string): ActionExecutor {
-  return new CopyExecutor({ src: files, dest });
+export function useCopy(files: string | string[], dest: string, options?: { relative?: string }): ActionExecutor {
+  return new CopyExecutor({ src: files, dest, options });
 }
 
 export function useTask(taskName: string): ActionExecutor {
