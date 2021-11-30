@@ -1,6 +1,6 @@
-import yesbuild, { uesEsBuild } from 'yesbuild';
+import yesbuild, { uesEsBuild, useParallel, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild';
 
-yesbuild.defineTask('default', function*() {
+yesbuild.defineTask('preview', function*() {
 	yield uesEsBuild({
 		entryPoints: ['./src/index.tsx'],
 		bundle: true,
@@ -10,3 +10,18 @@ yesbuild.defineTask('default', function*() {
 		splitting: true,
 	});
 });
+
+yesbuild.defineTask('serve', function*() {
+	const taskDir = useTaskDir();
+	yield useCopy('./assets/index.html', taskDir, {
+		relative: './assets/'
+	});
+  const { products } = yield useTask('esbuild');
+  return useDevServer({
+    products,
+  });
+});
+
+yesbuild.defineTask('default', () => useParallel([
+	'preview',
+]));

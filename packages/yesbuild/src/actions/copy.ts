@@ -24,9 +24,6 @@ export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
 
   // only copy when configure
 	public async execute(ctx: ExecutionContext): Promise<void> {
-    if (ctx.stage !== Stage.Configure) {
-      return;
-    }
     let sourceFiles: string [];
     let relativeDir: string;
 

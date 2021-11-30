@@ -131,6 +131,8 @@ interface TaskCollectorContinuation {
   lastResult?: ActionResult;
 }
 
+let runningTaskRunner: ScriptTaskRunner | undefined = undefined;
+
 class ScriptTaskRunner {
 
   private __continuation: TaskCollectorContinuation | undefined = undefined;
@@ -145,6 +147,7 @@ class ScriptTaskRunner {
   ) {
     const { buildDir } = runner;
     this.__taskDir = path.join(buildDir, this.taskName);
+    runningTaskRunner = this;
   }
 
   get taskDir() {
@@ -262,8 +265,6 @@ class ScriptTaskRunner {
 
 }
 
-export let runningTaskRunner: ScriptTaskRunner | undefined = undefined;
-
 /**
  * This class is designed to run the generator
  * to collect the dependencies
@@ -303,3 +304,5 @@ export function executeTaskToCollectDeps(graph: BuildGraph, registry: RegistryCo
   const taskRunner = new ScriptRunner(graph, registry, buildDir);
   return taskRunner.run();
 }
+
+export { runningTaskRunner }
