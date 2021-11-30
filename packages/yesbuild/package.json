@@ -2,6 +2,7 @@
   "name": "yesbuild",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Vincent Chan <okcdz@diverse.space>",
   "license": "MIT",
   "scripts": {
