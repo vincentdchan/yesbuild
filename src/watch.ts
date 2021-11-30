@@ -2,15 +2,20 @@ import * as fs from 'fs';
 import chokidar from 'chokidar';
 import { resolve } from 'path';
 import { green, grey, cyan } from 'chalk';
+import { fork, ChildProcess } from 'child_process';
+import { isUndefined, debounce } from 'lodash-es';
+import { performance } from 'perf_hooks';
 import { makeTaskYmlFilename, BuildGraph } from './buildGraph';
 import logger from './logger';
 
 class WatchContext {
 
   private __fileDeps: Set<string>;
+  private __prevProcess: ChildProcess | undefined = undefined;
 
   public constructor(
     public readonly graph: BuildGraph,
+    public readonly buildDir: string,
     public readonly taskName: string,
   ) {}
 
@@ -23,14 +28,55 @@ class WatchContext {
     return this.__fileDeps.has(filename);
   }
 
-  // Thoughts:
-  // Maybe spawn a new process to build would be better.
-  // assuming the build process will take along time.
-  //
-  // While the next task comming, we chan just kill tht last process
-  // to stop the last build.
-  public async rebuildTask() {
+  private __killPreviousProcess() {
+    if (isUndefined(this.__prevProcess)) {
+      return;
+    }
+    this.__prevProcess.kill();
+    this.__prevProcess = undefined;
+  }
 
+  /// Thoughts:
+  /// Maybe spawning a new process is a good choice.
+  /// assuming the build process will take along time.
+  ///
+  /// While the next task comming, we chan just kill tht last process
+  /// to stop the last build.
+  ///
+  /// Once using another proecess to rebuild, the buildGrapth
+  /// may be out of date, so read from files again
+  public rebuildTask() {
+    this.__killPreviousProcess();
+    logger.printIfReadable(`Spwaning task ${green(this.taskName)}`);
+
+    const args: string[] = [
+      'build',
+      this.buildDir,
+      '-t',
+      this.taskName,
+			'--ignore-meta',
+      '--log',
+      'json',
+    ];
+
+    const beginTime = performance.now();
+    const child = fork(__filename, args)
+
+    child.on('message', this.__handleMessage(beginTime));
+    child.on('close', this.__handleChildFinished(child));
+
+    this.__prevProcess = child;
+  }
+
+  private __handleMessage = (beginTime: number) => (msg: any) => {
+    const endTime = performance.now();
+    logger.prettyPrintOutput(msg, endTime - beginTime);
+  }
+
+  private __handleChildFinished = (child: ChildProcess) => () => {
+    if (this.__prevProcess === child) {
+      this.__prevProcess = undefined;
+    }
   }
 
 }
@@ -50,7 +96,7 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
   }
 
   const graph = BuildGraph.loadPartialFromYml(ymlPath);
-  const context = new WatchContext(graph, taskName);
+  const context = new WatchContext(graph, buildDir, taskName);
 
   const taskNode = graph.tasks.get(taskName);
   if (taskNode.deps === '*') {
@@ -77,11 +123,13 @@ function __startWatcher(ctx: WatchContext, options: WatchOptions) {
     console.log(`Watching ${green(resolve('.'))}...`)
   });
 
+  const rebuildTask = debounce(() => ctx.rebuildTask(), 300);
+
   watcher.on('change', (path) => {
     const isDep = ctx.isDep(path);
     if (isDep) {
       console.log(`Dependency of ${green(ctx.taskName)} changed: ${grey(path)}`);
-      ctx.rebuildTask();
+      rebuildTask();
     }
   });
 }

@@ -1,5 +1,5 @@
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { fork } from 'child_process';
+import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import logger from '../logger';

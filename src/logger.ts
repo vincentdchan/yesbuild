@@ -30,6 +30,38 @@ function friendlySize(bytes: number): string {
 
 export type ExitCallback = (exitCode: number) => void;
 
+function prettyPrint(errors: ErrorLog[], updatedYmlFiles: string[], output: ProductWithSize[], taskCounter: number, delta: number) {
+  if (errors.length > 0) {
+    for (const err of errors) {
+      console.log(err.message);
+    }
+    return;
+  }
+
+  if (updatedYmlFiles.length > 0) {
+    console.log();
+    console.log(`These YML files have changed due to the dependencies:`);
+    for (const f of updatedYmlFiles) {
+      console.log(` - ${grey(f)}`)
+    }
+  }
+
+  console.log();
+  if (output.length === 0) {
+    console.log('\ud83c\udf1e Everything is up to date.');
+    console.log()
+  } else {
+    output.sort((a, b) => a.size - b.size);
+    console.log(`${output.length} outputs generated.`);
+    const maxLenFilename = maxBy(output, o => o.file.length);
+    for (const { file, size } of output) {
+      console.log(`${grey(file.padEnd(maxLenFilename.file.length + 4))}${cyan(friendlySize(size))}`);
+    }
+    console.log();
+  }
+  console.log(`Totally ${taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
+}
+
 /**
  * Only the main process print readable log to stdout.
  * 
@@ -68,6 +100,7 @@ export class Logger {
         delta,
         taskCount: this.__taskCounter,
         updatedYmlFiles: this.__updatedYmlFiles,
+        errors: this.__errors,
       };
       try {
         process.send(data);
@@ -98,6 +131,22 @@ export class Logger {
     for (const f of updatedYmlFiles) {
       this.__updatedYmlFiles.push(f);
     }
+
+    const errors = objs.errors || [];
+    for (const e of errors) {
+      this.__errors.push(e);
+    }
+  }
+
+  public prettyPrintOutput(objs: any, delta: number) {
+    if (!isObjectLike(objs)) {
+      return;
+    }
+    const outputs = objs.outputs || [];
+    const taskCount = objs.taskCount || 0;
+    const updatedYmlFiles = objs.updatedYmlFiles || [];
+    const errors = objs.errors || [];
+    prettyPrint(errors, updatedYmlFiles, outputs, taskCount, delta);
   }
 
   public error(error: ErrorLog | string) {
@@ -115,35 +164,13 @@ export class Logger {
   }
 
   private __prettyPrint(delta: number) {
-    if (this.__errors.length > 0) {
-      for (const err of this.__errors) {
-        console.log(err.message);
-      }
-      return;
-    }
-
-    if (this.__updatedYmlFiles.length > 0) {
-      console.log();
-      console.log(`These YML files have changed due to the dependencies:`);
-      for (const f of this.__updatedYmlFiles) {
-        console.log(` - ${grey(f)}`)
-      }
-    }
-
-    console.log();
-    if (this.__output.length === 0) {
-      console.log('\ud83c\udf1e Everything is up to date.');
-      console.log()
-    } else {
-      this.__output.sort((a, b) => a.size - b.size);
-      console.log(`${this.__output.length} outputs generated.`);
-      const maxLenFilename = maxBy(this.__output, o => o.file.length);
-      for (const { file, size } of this.__output) {
-        console.log(`${grey(file.padEnd(maxLenFilename.file.length + 4))}${cyan(friendlySize(size))}`);
-      }
-      console.log();
-    }
-    console.log(`Totally ${this.__taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
+    prettyPrint(
+      this.__errors,
+      this.__updatedYmlFiles,
+      this.__output,
+      this.__taskCounter,
+      delta
+    );
   }
 
   public printIfReadable(content?: string) {
