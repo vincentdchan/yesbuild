@@ -192,13 +192,13 @@ class ScriptTaskRunner {
   }
 
   private async __testActionExecutor(executor: ActionExecutor): Promise<ActionResult | undefined> {
-    const params = executor.getParams();
+    const { props } = executor;
     const store: ActionStore = {
       name: (executor.constructor as any).actionName,
-      params,
+      props,
     }
     if (store.name === 'anotherTask') {
-      return this.__yieldResultOfAnotherTask(params,  store);
+      return this.__yieldResultOfAnotherTask(props,  store);
     }
 
     this.taskNode.actions.push(store);

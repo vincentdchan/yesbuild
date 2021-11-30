@@ -6,21 +6,21 @@ import * as fs from 'fs';
 import logger from '../logger';
 import { startServer, InternalServerOptions } from '../server';
 
-export interface DevServerOptions {
+export interface DevServerProps {
   host?: string,
   port?: number,
   products?: ProductsWithSize | string[],
   mapProducts?: string[],
 }
 
-export class DevServer extends ActionExecutor {
+export class DevServer extends ActionExecutor<DevServerProps> {
 
   public static actionName: string = 'internal:devServer';
   private __options: InternalServerOptions;
 
-  public constructor(options: DevServerOptions) {
-    super();
-    let { host, port, products, mapProducts } = options;
+  public constructor(props: DevServerProps) {
+    super(props);
+    let { host, port, products, mapProducts } = props;
     host = host || '127.0.0.1';
     port = port || 3000;
 
@@ -61,10 +61,6 @@ export class DevServer extends ActionExecutor {
       }
       startServer(taskDir, this.__options);
     })
-  }
-
-  public getParams() {
-    return this.__options;
   }
 
 }

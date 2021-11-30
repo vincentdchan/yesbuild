@@ -10,7 +10,7 @@ const YML_VERSION = '1.0';
 
 export interface ActionStore {
   name: string,
-  params?: any;
+  props?: any;
 }
 
 export interface TaskOutput {

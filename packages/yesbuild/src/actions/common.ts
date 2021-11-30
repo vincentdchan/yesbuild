@@ -15,35 +15,41 @@ export interface ExecutionContext {
  * An ancester of all executors,
  * an executor defined how yesbuild to execute an action
  */
-export abstract class ActionExecutor {
+export abstract class ActionExecutor<T = undefined> {
+
+  #props: T
 
   /**
    * Return the outputs files so yesbuild can know what files
    * to track, and when to re-execute the action.
    */
-  constructor() {}
+  constructor(props: T) {
+    this.#props = props;
+  }
 
   public execute(ctx: ExecutionContext): Promise<void> | void {}
 
   /**
-   * The params is the `config` of this action, and it's persistent.
+   * The props is the `config` of this action, and it's persistent.
    * It will be stored in the yml file.
    * 
    * When the action is re-construct, it will be passed form
    * the constructor, so the action can be rebuilt.
    */
-  abstract getParams(): any | undefined | void;
+  public get props(): T {
+    return this.#props;
+  }
 
 }
 
-export interface ActionExecutorConstructor {
-  new(options: any): ActionExecutor;
+export interface ActionExecutorConstructor<T = undefined> {
+  new(props: T): ActionExecutor<T>;
   actionName: string;
 }
 
-const actionRegistry: Map<string, ActionExecutorConstructor> = new Map();
+const actionRegistry: Map<string, ActionExecutorConstructor<any>> = new Map();
 
-export function registerAction(ctr: ActionExecutorConstructor) {
+export function registerAction<T>(ctr: ActionExecutorConstructor<T>) {
   const { actionName } = ctr;
   actionRegistry.set(actionName, ctr);
 }

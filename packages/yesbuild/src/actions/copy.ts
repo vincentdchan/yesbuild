@@ -4,22 +4,22 @@ import { join, relative, dirname } from 'path';
 import * as fs from 'fs';
 import { Stage } from '../flags';
 
-export interface CopyExecutorOptions {
+export interface CopyExecutorProps {
   src: string | string[];
   dest?: string;
   options?: { relative?: string }
 }
 
-export class CopyExecutor extends ActionExecutor {
+export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
 
 	public static actionName: string = 'internal:copy'
   private __src: string | string[];
   private __dest?: string;
 
-  public constructor(private options: CopyExecutorOptions) {
-    super();
-    this.__src = options.src;
-    this.__dest = options.dest;
+  public constructor(props: CopyExecutorProps) {
+    super(props);
+    this.__src = props.src;
+    this.__dest = props.dest;
   }
 
   // only copy when configure
@@ -30,8 +30,8 @@ export class CopyExecutor extends ActionExecutor {
     let sourceFiles: string [];
     let relativeDir: string;
 
-    if (this.options.options && this.options.options.relative) {
-      relativeDir = this.options.options.relative;
+    if (this.props.options && this.props.options.relative) {
+      relativeDir = this.props.options.relative;
     } else {
       relativeDir = process.cwd();
     }
@@ -74,10 +74,6 @@ export class CopyExecutor extends ActionExecutor {
       const stat = fs.statSync(dest);
       ctx.productsBuilder.push(dest, stat.size);
     }
-  }
-
-  getParams(): CopyExecutorOptions {
-    return this.options;
   }
 
 }

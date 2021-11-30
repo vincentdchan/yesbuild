@@ -7,7 +7,7 @@ import {
   Platform as EsPlatform,
 } from 'esbuild';
 
-export interface BuildOptions {
+export interface EsBuildProps {
   entryPoints: string[],
   platform?: EsPlatform,
   bundle?: boolean
@@ -18,12 +18,12 @@ export interface BuildOptions {
   external?: string[],
 }
 
-export class EsbuildBundleExecutor extends ActionExecutor {
+export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
 
   public static actionName: string = 'internal:esbuild'
 
-  public constructor(private options: BuildOptions) {
-    super();
+  public constructor(props: EsBuildProps) {
+    super(props);
   }
 
   public async execute(ctx: ExecutionContext) {
@@ -35,7 +35,7 @@ export class EsbuildBundleExecutor extends ActionExecutor {
       splitting,
       sourcemap,
       external,
-    } = this.options;
+    } = this.props;
     const { taskDir } = ctx;
     const esBuildOptions: EsBuildOptions = {
       entryPoints,
@@ -66,10 +66,6 @@ export class EsbuildBundleExecutor extends ActionExecutor {
         ctx.depsBuilder.dependFile(dep);
       }
     }
-  }
-
-  public getParams(): BuildOptions {
-    return this.options;
   }
 
 }

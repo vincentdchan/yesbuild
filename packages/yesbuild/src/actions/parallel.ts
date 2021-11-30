@@ -26,12 +26,12 @@ function forkAsync(command: string, args: string[]): Promise<any | undefined> {
   return promise;
 }
 
-export class ParallelExecutor extends ActionExecutor {
+export class ParallelExecutor extends ActionExecutor<string[]> {
 
   public static actionName: string = 'internal:parallel';
 
-  public constructor(private tasks: string[]) {
-    super();
+  public constructor(tasks: string[]) {
+    super(tasks);
   }
 
   async execute(ctx: ExecutionContext) {
@@ -43,7 +43,7 @@ export class ParallelExecutor extends ActionExecutor {
   }
 
   private async __executeAll(ctx: ExecutionContext) {
-    const tasks = this.tasks.map(name => this.__executeTask(name, ctx));
+    const tasks = this.props.map(name => this.__executeTask(name, ctx));
     const tuples = await Promise.all(tasks);
     for (const [, out] of tuples) {
       // no output or all of them are whitespaces, ignore them
@@ -72,10 +72,6 @@ export class ParallelExecutor extends ActionExecutor {
     const stdout = await forkAsync(__filename, args);
 
     return [taskName, stdout];
-  }
-
-  public getParams(): string[] {
-    return this.tasks;
   }
 
 }

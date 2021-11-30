@@ -128,7 +128,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 }
 
 export async function runActionOfTask(ctx: ExecutionContext, taskName: string, rawAction: ActionStore): Promise<void> {
-  const { name, params } = rawAction;
+  const { name, props } = rawAction;
   let actionCtor = getAction(name);
   if (!actionCtor) {
     await import(name);  // load the plugins
@@ -139,7 +139,7 @@ export async function runActionOfTask(ctx: ExecutionContext, taskName: string, r
     return;
   }
 
-  const action = new actionCtor(params);
+  const action = new actionCtor(props);
 
   const tmp = action.execute(ctx);
 	if (isUndefined(tmp)) {

@@ -5,8 +5,8 @@ export interface ActionResult {
   products?: ProductWithSize[];
 }
 
-export type ActionExecutorGenerator = Generator<ActionExecutor, ActionExecutor | void, ActionResult>;
-export type TaskCallback = () => ActionExecutor | ActionExecutorGenerator | void;
+export type ActionExecutorGenerator = Generator<ActionExecutor<any>, ActionExecutor<any> | void, ActionResult>;
+export type TaskCallback = () => ActionExecutor<any> | ActionExecutorGenerator | void;
 
 interface Task {
   name: string,

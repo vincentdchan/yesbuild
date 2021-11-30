@@ -33,17 +33,16 @@ function cleanFilesInDir(dir: string) {
   }
 }
 
-export class TypeScriptExecutor extends ActionExecutor {
+export class TypeScriptExecutor extends ActionExecutor<TypeScriptBuildOptions> {
 
   public static actionName: string = '@yesbuild/typescript'
   private __program: TsType.Program;
   private __config: any;
 
-  public constructor(private options: TypeScriptBuildOptions) {
-
-    super();
-    if (isUndefined(options)) {
-      throw new Error(`Internal Error <TypeScriptExecutor>: options is undefined`);
+  public constructor(props: TypeScriptBuildOptions) {
+    super(props);
+    if (isUndefined(props)) {
+      throw new Error(`Internal Error <TypeScriptExecutor>: props is undefined`);
     }
   }
 
@@ -60,16 +59,16 @@ export class TypeScriptExecutor extends ActionExecutor {
       ctx.depsBuilder.dependFile(configFile);
     }
 
-    let options: TsType.CompilerOptions = {};
+    let props: TsType.CompilerOptions = {};
     if (this.__config && 'compilerOptions' in this.__config) {
-      Object.assign(options, this.__config.compilerOptions);
+      Object.assign(props, this.__config.compilerOptions);
     }
 
-    if (this.options.compilerOptions) {
-      Object.assign(options, this.options.compilerOptions);
+    if (this.props.compilerOptions) {
+      Object.assign(props, this.props.compilerOptions);
     }
 
-    const { rootNames } = this.options;
+    const { rootNames } = this.props;
     const { taskDir } = ctx;
     if (fs.existsSync(taskDir)) {
       cleanFilesInDir(taskDir);
@@ -80,7 +79,7 @@ export class TypeScriptExecutor extends ActionExecutor {
     this.__program = ts.createProgram({
       rootNames,
       options: {
-        ...options,
+        ...props,
         outDir: taskDir,
       },
     });
@@ -111,14 +110,10 @@ export class TypeScriptExecutor extends ActionExecutor {
     }
   }
 
-  getParams() {
-    return this.options;
-  }
-
 }
 
 registerAction(TypeScriptExecutor);
 
-export function useTypeScript(options: TypeScriptBuildOptions): ActionExecutor {
+export function useTypeScript(options: TypeScriptBuildOptions): TypeScriptExecutor {
   return new TypeScriptExecutor(options);
 }
