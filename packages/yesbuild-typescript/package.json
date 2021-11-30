@@ -1,0 +1,13 @@
+{
+  "name": "@yesbuild/typescript",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "tsconfig": "^7.0.0",
+    "typescript": "^4.5.2",
+    "yesbuild": "workspace:^1.0.0"
+  },
+  "devDependencies": {
+    "lodash-es": "^4.17.21"
+  }
+}

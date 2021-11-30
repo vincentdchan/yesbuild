@@ -68,7 +68,12 @@ async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder):
     platform: 'node',
     metafile: true,
     plugins: [],
-    external: ['esbuild', 'yesbuild', './dist'],
+    external: [
+      'esbuild',
+      'yesbuild',
+      '@yesbuild/typescript',
+      './dist'
+    ],
   };
 
   const buildResult = await esbuild(esBuildOptions);

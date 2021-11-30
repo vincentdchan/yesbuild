@@ -1,8 +1,7 @@
 
 export * from './common';
 export * from './esBuild';
-export * from './typescript';
 export * from './parallel';
-export * from './copyFrom';
+export * from './copy';
 export * from './anotherTask';
 export * from './devServer';

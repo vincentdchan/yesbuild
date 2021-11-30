@@ -2,10 +2,8 @@ import {
   ActionExecutor,
   EsbuildBundleExecutor,
   BuildOptions,
-  TypeScriptExecutor,
   ParallelExecutor,
-  TypeScriptBuildOptions,
-  CopyFromExecutor,
+  CopyExecutor,
   AnotherTask,
   DevServerOptions,
   DevServer,
@@ -20,16 +18,12 @@ export function uesEsBuild(options: BuildOptions): ActionExecutor {
   return new EsbuildBundleExecutor(options);
 }
 
-export function useTypeScript(options: TypeScriptBuildOptions): ActionExecutor {
-  return new TypeScriptExecutor(options);
-}
-
 export function useParallel(tasks: string[]): ActionExecutor {
   return new ParallelExecutor(tasks);
 }
 
-export function useCopyFrom(files: string | string[]): ActionExecutor {
-  return new CopyFromExecutor(files);
+export function useCopy(files: string | string[], dest: string): ActionExecutor {
+  return new CopyExecutor({ src: files, dest });
 }
 
 export function useTask(taskName: string): ActionExecutor {

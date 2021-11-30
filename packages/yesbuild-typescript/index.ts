@@ -1,9 +1,14 @@
+import { ActionExecutor, registerAction, ExecutionContext } from 'yesbuild';
 import { isUndefined } from 'lodash-es';
 import * as fs from 'fs';
 import * as path from 'path';
 import type TsType from 'typescript';
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import * as tsconfig from 'tsconfig';
+
+export interface TypeScriptBuildOptions {
+  rootNames: string[],
+  compilerOptions?: TsType.CompilerOptions,
+}
 
 export interface TypeScriptBuildOptions {
   rootNames: string[],
@@ -112,3 +117,7 @@ export class TypeScriptExecutor extends ActionExecutor {
 }
 
 registerAction(TypeScriptExecutor);
+
+export function useTypeScript(options: TypeScriptBuildOptions): ActionExecutor {
+  return new TypeScriptExecutor(options);
+}
