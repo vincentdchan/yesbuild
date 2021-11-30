@@ -5,9 +5,7 @@
   "author": "Vincent Chan <okcdz@diverse.space>",
   "license": "MIT",
   "scripts": {
-    "build": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:chokidar --external:esbuild --external:typescript --sourcemap",
-    "build:ts": "tsc --declaration --emitDeclarationOnly --outDir dist src/index.ts",
-    "watch": "esbuild --bundle src/index.ts --outdir=dist --platform=node --external:chokidar --external:esbuild --external:typescript --sourcemap --watch"
+    "build:ts": "tsc --declaration --emitDeclarationOnly --outDir dist src/index.ts"
   },
   "dependencies": {
     "chokidar": "^3.5.2",

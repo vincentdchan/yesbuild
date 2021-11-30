@@ -1,14 +1,17 @@
 {
-    "name": "yebuild-monorepo",
-    "private": true,
-    "workspaces": [
-        "packages/*"
-    ],
-    "engines": {
-        "node": ">=12.0.0"
-    },
-    "dependencies": {
-        "chokidar": "^3.5.2",
-        "esbuild": "^0.13.15"
-    }
+  "name": "yebuild-monorepo",
+  "private": true,
+  "workspaces": [
+      "packages/*"
+  ],
+  "scripts": {
+    "bootstrap": "esbuild --bundle packages/yesbuild/src/index.ts --outdir=dist --platform=node --external:chokidar --external:esbuild --external:typescript --sourcemap"
+  },
+  "engines": {
+      "node": ">=12.0.0"
+  },
+  "dependencies": {
+      "chokidar": "^3.5.2",
+      "esbuild": "^0.13.15"
+  }
 }
