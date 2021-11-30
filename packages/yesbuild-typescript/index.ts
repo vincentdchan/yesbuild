@@ -35,11 +35,12 @@ function cleanFilesInDir(dir: string) {
 
 export class TypeScriptExecutor extends ActionExecutor {
 
-  public static actionName: string = 'typescript'
+  public static actionName: string = '@yesbuild/typescript'
   private __program: TsType.Program;
   private __config: any;
 
   public constructor(private options: TypeScriptBuildOptions) {
+
     super();
     if (isUndefined(options)) {
       throw new Error(`Internal Error <TypeScriptExecutor>: options is undefined`);

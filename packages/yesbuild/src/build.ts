@@ -129,7 +129,11 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
 
 export async function runActionOfTask(ctx: ExecutionContext, taskName: string, rawAction: ActionStore): Promise<void> {
   const { name, params } = rawAction;
-  const actionCtor = getAction(name);
+  let actionCtor = getAction(name);
+  if (!actionCtor) {
+    await import(name);  // load the plugins
+  }
+  actionCtor = getAction(name);
   if (!actionCtor) {
     logger.panic(`Unreconized action ${red(name)}, can not rebuild task ${taskName}.`);
     return;
