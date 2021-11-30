@@ -20,7 +20,7 @@ cli
 
     configure(configOptions)
       .then(() => {
-        logger.printAndExit()
+        logger.printAndExit({ ignoreYmlFiles: true });
       })
       .catch(err => {
         logger.panic(err.toString())

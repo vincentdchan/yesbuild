@@ -1,11 +1,10 @@
-import * as fs from 'fs';
 import chokidar from 'chokidar';
 import { resolve } from 'path';
 import { green, grey, cyan, red } from 'chalk';
 import { fork, ChildProcess } from 'child_process';
 import { isUndefined, debounce } from 'lodash-es';
 import { performance } from 'perf_hooks';
-import { makeTaskYmlFilename, BuildGraph } from './buildGraph';
+import { BuildGraph } from './buildGraph';
 import logger from './logger';
 
 class AsyncTask {
@@ -59,23 +58,12 @@ class WatchContext {
   // path => tasknames
   private __fileDeps: Map<string, string[]> = new Map();
   private __prevTask: AsyncTask | undefined = undefined;
-  private __ymlPaths: Map<string, string> = new Map();
 
   public constructor(
     public readonly graph: BuildGraph,
     public readonly buildDir: string,
     public readonly taskNames: string[],
-  ) {
-    for (const taskName of taskNames) {
-      const ymlPath = makeTaskYmlFilename(buildDir, taskName);
-      if (!fs.existsSync(ymlPath)) {
-        logger.panic(`Error: ${cyan(ymlPath)} not exists, task ${green(taskName)} can not build.
-    Is the directory ${grey(resolve(buildDir))} correct?`);
-      }
-      this.__ymlPaths.set(taskName, ymlPath);
-      this.partialReloadGraphFromYml(taskName);
-    }
-  }
+  ) {}
 
   public collectFileDepsByEntries() {
     for (const taskName of this.taskNames) {
@@ -147,19 +135,12 @@ class WatchContext {
     if (this.__prevTask === task) {
       this.__prevTask = undefined;
     }
-    this.partialReloadGraphFromYml(task.taskName);
+
+    this.graph.forceReloadTask(task.taskName);
 
     if (task.next) {
       this.__runTask(task.next);
     }
-  }
-
-  public partialReloadGraphFromYml(taskName: string) {
-    const ymlPath = this.__ymlPaths.get(taskName);
-    if (isUndefined(ymlPath)) {
-      throw new Error(`ymlPath not found for ${taskName}`);
-    }
-    this.graph.loadPartialFromYml(ymlPath);
   }
 
 }
@@ -171,11 +152,11 @@ export interface WatchOptions {
 
 export function watch(options: WatchOptions) {
   const { buildDir, taskNames } = options;
-  const graph = new BuildGraph();
+  const graph = new BuildGraph(buildDir);
   const context = new WatchContext(graph, buildDir, taskNames);
 
   for (const taskName of taskNames) {
-    const taskNode = graph.tasks.get(taskName);
+    const taskNode = graph.loadTask(taskName);
     if (taskNode.deps === '*') {
       logger.panic(`The dependencies of ${green(taskName)} is '*', can not watch`);
       return;

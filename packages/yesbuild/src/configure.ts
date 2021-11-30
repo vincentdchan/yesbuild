@@ -21,11 +21,12 @@ async function __configure(graph: BuildGraph, scriptContext: BuildScriptContext,
 
   // run user's registed function to collect deps
   await executeTaskToCollectDeps(graph, registry, buildDir);
-  await graph.dumpFiles(buildDir);
+  await graph.dumpFiles();
 }
 
 export default async function configure(options: ConfigOptions) {
   const scriptContext = await loadBuildScript();
-  const graph = new BuildGraph(scriptContext.deps);
+  const { buildDir } = options;
+  const graph = new BuildGraph(buildDir, scriptContext.deps);
   await __configure(graph, scriptContext, options);
 }

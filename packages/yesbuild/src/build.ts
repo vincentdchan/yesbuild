@@ -1,10 +1,9 @@
 import { join, resolve } from 'path';
-import * as fs from 'fs';
-import { green, red, cyan, grey } from 'chalk';
+import { green, red, cyan } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import configure, { ConfigOptions } from './configure';
 import { Deps, DependenciesChangedCell, DependencyBuilder } from './dependency';
-import { TaskNode, BuildGraph, makeTaskYmlFilename, ActionStore } from './buildGraph';
+import { TaskNode, BuildGraph, ActionStore } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
 import { FLAGS_STAGE_MASK, FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
 import { ProductWithSize, ProductBuilder } from './product';
@@ -18,18 +17,10 @@ export interface BuildOptions {
 
 export async function build(options: BuildOptions) {
   const { buildDir, task: taskName, flags } = options;
-  const ymlPath = makeTaskYmlFilename(buildDir, taskName);
-  if (!fs.existsSync(ymlPath)) {
-    logger.panic(`Error: ${cyan(ymlPath)} not exists, task ${green(taskName)} can not build.
-Is the directory ${grey(resolve(buildDir))} correct?`);
-    return;
-  }
-
-  const graph = new BuildGraph();
-  graph.loadPartialFromYml(ymlPath);
+  const graph = new BuildGraph(buildDir);
 
   let changedDepOfMeta: string | undefined = undefined
-  if (!(flags & FLAGS_IGNORE_META) && (changedDepOfMeta = graph.needsReconfig(buildDir))) {
+  if (!(flags & FLAGS_IGNORE_META) && (changedDepOfMeta = graph.needsReconfig())) {
     logger.printIfReadable(`${cyan(changedDepOfMeta)} changed, reconfig...`);
     const configOptions: ConfigOptions = {
       buildDir,
@@ -42,7 +33,6 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
 
   const taskOptions: RunTaskOptions = {
     flags,
-    ymlPath,
     workDir: buildDir,
   }
 
@@ -60,7 +50,7 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
     }
 
     for (const taskName of tasksToRun) {
-      const task = graph.tasks.get(taskName);
+      const task = graph.loadTask(taskName);
       if (!task) {
         logger.panic(`Task ${red(taskName)} not found!`);
         return;
@@ -73,25 +63,21 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
   }
 
   if (dependenciesChangedCell.changed) {
-    await graph.dumpFiles(buildDir);
-    logger.addUpdatedYml(ymlPath);
+    await graph.dumpFiles();
   }
 }
 
 export interface RunTaskOptions {
   flags: number;
-  ymlPath: string;
   workDir: string;
 }
 
 export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: number, changedCell?: DependenciesChangedCell) {
   const orderedTasks: string[] = graph.checkDependenciesUpdated('*', Boolean(flags & FLAGS_FORCE_UPDATE));
   for (const taskName of orderedTasks) {
-    const task = graph.tasks.get(taskName);
-    const ymlPath = makeTaskYmlFilename(buildDir, taskName);
+    const task = graph.loadTask(taskName);
     const options: RunTaskOptions = {
       flags,
-      ymlPath,
       workDir: buildDir,
     };
     const outputs = await __runTask(task, taskName, options, changedCell);

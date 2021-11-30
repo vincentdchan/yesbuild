@@ -1,5 +1,4 @@
-import yesbuild, { uesEsBuild, useParallel,
-  useCopy, useTask, useDevServer } from 'yesbuild';
+import yesbuild, { useCopy, useTask } from 'yesbuild';
 import { useTypeScript } from '@yesbuild/typescript';
 
 yesbuild.defineTask('coreType', function*() {

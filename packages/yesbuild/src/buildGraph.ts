@@ -37,7 +37,7 @@ export function makeTaskNode(): TaskNode {
   };
 }
 
-export function makeTaskYmlFilename(buildDir: string, taskName: string): string {
+function makeTaskYmlFilename(buildDir: string, taskName: string): string {
   return path.join(buildDir, `yesbuild.${taskName}.yml`);
 }
 
@@ -112,21 +112,23 @@ function findLatestTimeOfOutput(outputs: string[]): [string, number] | '*' | und
   return maxBy(times, ([, time]) => time);
 }
 
-/**
- * Centrail data to store Graph
- */
-export class BuildGraph {
+// load task on demand
+class TaskManager {
 
-  public readonly tasks: Map<string, TaskNode> = new Map();
-  private __metaDeps: Dependencies;
+  private __tasks: Map<string, TaskNode> = new Map();
+  protected __metaDeps: Dependencies;
 
-  public loadPartialFromYml(path: string) {
+  public constructor(protected buildDir: string, metaDeps: Dependencies = undefined) {
+    this.__metaDeps = metaDeps;
+  }
+
+  private __loadPartialFromYml(path: string): TaskNode | undefined {
     const content = fs.readFileSync(path, 'utf-8');
     const objs: any = yaml.load(content);
     return this.__fromJSON(objs);
   }
 
-  private __fromJSON(objs: any) {
+  private __fromJSON(objs: any): TaskNode | undefined {
     if (!isObjectLike(objs)) {
       throw new Error(`ModuleGraph::__fromJSON only received object, but got ${objs}`);
     }
@@ -136,31 +138,120 @@ export class BuildGraph {
         if (isObjectLike(task)) {
           const { name, ...taskNode } = task;
           if (isString(name)) {
-            this.tasks.set(name, taskNode);
+            this.insertTask(name, taskNode);
+            return taskNode;
           }
         }
       }
     }
+
+    return undefined;
   }
 
-  public constructor(metaDeps: Dependencies = undefined) {
-    this.__metaDeps = metaDeps;
+  public forceReloadTask(taskName: string) {
+    const path = makeTaskYmlFilename(this.buildDir, taskName);
+    const taskNode = this.__loadPartialFromYml(path);
+    this.__tasks.set(taskName, taskNode);
   }
 
-  private __loadMeta(buildDir: string) {
+  public loadTask(taskName: string): TaskNode {
+    let taskNode = this.__tasks.get(taskName);
+    if (!taskNode) {
+      const path = makeTaskYmlFilename(this.buildDir, taskName);
+      taskNode = this.__loadPartialFromYml(path);
+      this.__tasks.set(taskName, taskNode);
+    }
+    return taskNode;
+  }
+
+  public insertTask(taskName: string, taskNode: TaskNode) {
+    this.__tasks.set(taskName, taskNode);
+  }
+
+  public getOrNewTaskNode(taskName: string): TaskNode {
+    let taskNode = this.__tasks.get(taskName);
+    if (!taskNode) {
+      taskNode = makeTaskNode();
+      this.__tasks.set(taskName, taskNode);
+    }
+
+    return taskNode;
+  }
+
+  protected getAllTasknames(): string[] {
+    return [...this.__tasks.keys()];
+  }
+
+  protected __loadMeta(buildDir: string) {
     const filename = makeMetaYmlFilename(buildDir);
     const content = fs.readFileSync(filename, 'utf8');
     const objs: any = yaml.load(content);
     this.__metaDeps = objs.deps;
   }
 
+  public async dumpFiles(ignoreMeta?: boolean): Promise<any> {
+    if (!ignoreMeta) {
+      await this.__dumpMetaFiles();
+    }
+
+    const promises: Promise<any>[] = [];
+    for (const [taskName, task] of this.__tasks) {
+      promises.push(this.__dumpFile(taskName, task));
+    }
+
+    await Promise.all(promises);
+
+    for (const [taskName, ] of this.__tasks) {
+      const ymlPath = makeTaskYmlFilename(this.buildDir, taskName);
+      logger.addUpdatedYml(ymlPath);
+    }
+  }
+
+  private __dumpFile(taskName: string, taskNode: TaskNode): Promise<any> {
+    const path = makeTaskYmlFilename(this.buildDir, taskName);
+    const objs: any = Object.create(null);
+    objs['version'] = YML_VERSION;
+
+    const tasks = {
+      name: taskName,
+      ...taskNode,
+    }
+
+    objs['tasks'] = [tasks];
+
+    const result = yaml.dump(objs);
+
+    return fs.promises.writeFile(path, result);
+  }
+
+  private __dumpMetaFiles(): Promise<any> {
+    const filename = makeMetaYmlFilename(this.buildDir);
+    const objs: any = Object.create(null);
+    objs['version'] = YML_VERSION;
+    objs['deps'] = this.__metaDeps;
+    const result = yaml.dump(objs);
+
+    return fs.promises.writeFile(filename, result);
+  }
+
+}
+
+/**
+ * Centrail data to store Graph
+ */
+export class BuildGraph extends TaskManager {
+
+  public constructor(buildDir: string, metaDeps: Dependencies = undefined) {
+    super(buildDir, metaDeps);
+  }
+
   /**
    * Check if the dependencies of `yesbuild.yml` changed,
    * if changed, return the filename.
    */
-  public needsReconfig(buildDir: string): string| '*' | undefined {
-    this.__loadMeta(buildDir);
-    const ymlPath = makeMetaYmlFilename(buildDir);
+  public needsReconfig(): string| '*' | undefined {
+    this.__loadMeta(this.buildDir);
+    const ymlPath = makeMetaYmlFilename(this.buildDir);
     const stat = fs.statSync(ymlPath);
     const { mtimeMs } = stat;
     return this.__checkDepsForRoot(mtimeMs);
@@ -203,10 +294,10 @@ export class BuildGraph {
   public checkDependenciesUpdated(entry: string, forceUpdate: boolean = false): string[] {
     const collector = new DependenciesCollector();
     if (entry === '*') {
-      const taskNames = [...this.tasks.keys()];
+      const taskNames = this.getAllTasknames();
       collector.addTaskNamesToUpdate(taskNames);
     } else {
-      const entryTask = this.tasks.get(entry);
+      const entryTask = this.loadTask(entry);
       this.__collectTask(collector, entry, entryTask);
       if (forceUpdate) {
         this.__addAllSubTasks(collector, entry);
@@ -222,7 +313,7 @@ export class BuildGraph {
 
   public collectAllFilesDeps(entry: string): string[] {
     const collector = new DependenciesCollector();
-    const entryTask = this.tasks.get(entry);
+    const entryTask = this.loadTask(entry);
     this.__collectTask(collector, entry, entryTask);
     return [...collector.fileDeps.keys()];
   }
@@ -346,7 +437,7 @@ export class BuildGraph {
     const outputs: string[] = [];
 
     for (const taskName of taskNames) {
-      const task = this.tasks.get(taskName);
+      const task = this.loadTask(taskName);
       if (isUndefined(task.products)) {
         continue;
       }
@@ -402,52 +493,12 @@ export class BuildGraph {
     if (isString(testResult)) {
       if (!collector.isTaskCollected(testResult)) {
         collector.pushTaskDepForTask(taskName, testResult);
-        const task = this.tasks.get(testResult);
+        const task = this.loadTask(testResult);
         this.__collectTask(collector, testResult, task);
       }
       return true;
     }
     return false;
-  }
-
-  public async dumpFiles(dir: string, ignoreMeta?: boolean): Promise<any> {
-    if (!ignoreMeta) {
-      await this.__dumpMetaFiles(dir);
-    }
-
-    const promises: Promise<any>[] = [];
-    for (const [taskName, task] of this.tasks) {
-      promises.push(this.__dumpFile(dir, taskName, task));
-    }
-
-    await Promise.all(promises);
-  }
-
-  private __dumpFile(dir: string, taskName: string, taskNode: TaskNode): Promise<any> {
-    const path = makeTaskYmlFilename(dir, taskName);
-    const objs: any = Object.create(null);
-    objs['version'] = YML_VERSION;
-
-    const tasks = {
-      name: taskName,
-      ...taskNode,
-    }
-
-    objs['tasks'] = [tasks];
-
-    const result = yaml.dump(objs);
-
-    return fs.promises.writeFile(path, result);
-  }
-
-  private __dumpMetaFiles(dir: string): Promise<any> {
-    const filename = makeMetaYmlFilename(dir);
-    const objs: any = Object.create(null);
-    objs['version'] = YML_VERSION;
-    objs['deps'] = this.__metaDeps;
-    const result = yaml.dump(objs);
-
-    return fs.promises.writeFile(filename, result);
   }
 
 }

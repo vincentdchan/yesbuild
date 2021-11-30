@@ -71,6 +71,11 @@ function prettyPrint(errors: ErrorLog[], updatedYmlFiles: string[], output: Prod
   console.log(`Totally ${taskCounter} tasks is executed in ${Math.round(delta)}ms.`);
 }
 
+export interface PrintOptions {
+  exitCode?: number;
+  ignoreYmlFiles?: boolean,
+}
+
 /**
  * Only the main process print readable log to stdout.
  * 
@@ -98,7 +103,16 @@ export class Logger {
     this.__updatedYmlFiles.push(path);
   }
 
-  public printAndExit(exitCode: number = 0) {
+  public printAndExit(options?: PrintOptions) {
+    let exitCode = 0;
+    if (options && options.exitCode) {
+      exitCode = options.exitCode;
+    }
+
+    if (options && options.ignoreYmlFiles) {
+      this.__updatedYmlFiles.length = 0;
+    }
+
     this.__endTime = performance.now();
     const delta = this.__endTime - this.__beginTime;
     if (this.mode === LogMode.Readable) {
@@ -169,7 +183,7 @@ export class Logger {
 
   public panic(error: ErrorLog | string) {
     this.error(error);
-    this.printAndExit(1);
+    this.printAndExit({ exitCode: 1 });
   }
 
   private __prettyPrint(delta: number) {

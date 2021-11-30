@@ -126,16 +126,6 @@ async function loadScriptAsProfile(path: string): Promise<BuildScriptContext> {
   };
 }
 
-function getOrNewTaskNode(graph: BuildGraph, taskName: string): TaskNode {
-  let taskNode = graph.tasks.get(taskName);
-  if (!taskNode) {
-    taskNode = makeTaskNode();
-    graph.tasks.set(taskName, taskNode);
-  }
-
-  return taskNode;
-}
-
 interface TaskCollectorContinuation {
   generator: ActionExecutorGenerator;
   lastResult?: ActionResult;
@@ -302,7 +292,7 @@ class ScriptRunner {
    * Set a global dependency collector to collects dependencies
    */
   private __executeTaskToCollectDeps(taskName: string): Promise<void> {
-    const taskNode = getOrNewTaskNode(this.graph, taskName);
+    const taskNode = this.graph.getOrNewTaskNode(taskName);
     const taskRunner = new ScriptTaskRunner(this, taskName, taskNode);
     return taskRunner.run();
   }
