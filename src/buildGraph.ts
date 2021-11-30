@@ -25,14 +25,14 @@ export function makeTaskOutput(): TaskOutput {
 
 export interface TaskNode {
   actions: ActionStore[],
-  outputs: string[];
+  products: string[];
   deps?: Dependencies;
 }
 
 export function makeTaskNode(): TaskNode {
   return {
     actions: [],
-    outputs: Object.create(null),
+    products: Object.create(null),
     deps: undefined,
   };
 }
@@ -323,10 +323,10 @@ export class BuildGraph {
 
     for (const taskName of taskNames) {
       const task = this.tasks.get(taskName);
-      if (isUndefined(task.outputs)) {
+      if (isUndefined(task.products)) {
         continue;
       }
-      for (const output of task.outputs) {
+      for (const output of task.products) {
         outputs.push(output);
       }
     }

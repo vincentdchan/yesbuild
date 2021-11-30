@@ -1,16 +1,16 @@
 import * as path from 'path';
 
-export interface OutputLog {
+export interface ProductWithSize {
   file: string,
   size: number,
 }
 
-export type Outputs = OutputLog[];
+export type ProductsWithSize = ProductWithSize[];
 
-export class OutputBuilder {
+export class ProductBuilder {
 
   #currentDir: string;
-  #outputs: Outputs = [];
+  #outputs: ProductsWithSize = [];
 
   constructor() {
     this.#currentDir = process.cwd();
@@ -21,7 +21,7 @@ export class OutputBuilder {
     this.#outputs.push({ file, size });
   }
 
-  public finalize(): Outputs {
+  public finalize(): ProductsWithSize {
     return this.#outputs;
   }
 

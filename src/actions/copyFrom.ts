@@ -35,7 +35,7 @@ export class CopyFromExecutor extends ActionExecutor {
       const dest = join(taskDir, filename);
       fs.copyFileSync(file, dest);
       const stat = fs.statSync(dest);
-      ctx.outputBuilder.push(dest, stat.size);
+      ctx.productsBuilder.push(dest, stat.size);
     }
   }
 

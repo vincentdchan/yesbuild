@@ -6,7 +6,7 @@ import { grey } from 'chalk';
 export interface InternalServerOptions {
   host: string,
   port: number,
-  mapOutputs: string[],
+  mapProducts: string[],
 }
 
 export interface YesContext extends Koa.DefaultContext {
@@ -16,7 +16,7 @@ export interface YesContext extends Koa.DefaultContext {
 export type KoaContext = Koa.ParameterizedContext<Koa.DefaultState, YesContext>;
 
 export function startServer(staticDir: string, options: InternalServerOptions) {
-  const serverContext = new ServerContext(options.mapOutputs);
+  const serverContext = new ServerContext(options.mapProducts);
   const app = new Koa<Koa.DefaultState, YesContext>();
   app.use((ctx, next) => {
     ctx.serverContext = serverContext;

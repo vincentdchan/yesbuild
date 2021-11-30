@@ -28,8 +28,8 @@ yesbuild.defineTask('default', () => useParallel([
 
 yesbuild.defineTask('serve', function*() {
   yield useCopyFrom('./assets/index.html');
-  const { outputs } = yield useTask('esbuild');
+  const { products } = yield useTask('esbuild');
   return useDevServer({
-    outputs,
+    products,
   });
 });

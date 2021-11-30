@@ -7,7 +7,7 @@ import { Deps, DependenciesChangedCell, DependencyBuilder } from './dependency';
 import { TaskNode, BuildGraph, makeTaskYmlFilename, ActionStore } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
 import { FLAGS_STAGE_MASK, FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
-import { OutputLog, Outputs, OutputBuilder } from './output';
+import { ProductWithSize, ProductsWithSize, ProductBuilder } from './product';
 import logger from './logger';
 
 export interface BuildOptions {
@@ -100,7 +100,7 @@ export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: nu
   }
 }
 
-function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedCell?: DependenciesChangedCell): Promise<OutputLog[]> {
+function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedCell?: DependenciesChangedCell): Promise<ProductWithSize[]> {
   logger.plusTaskCounter();
   logger.printIfReadable(`Running task: ${green(taskName)}`);
 
@@ -109,16 +109,16 @@ function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, ch
   return rebuild(taskName, task, buildDir, flags, changedCell);
 }
 
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedCell?: DependenciesChangedCell): Promise<OutputLog[]> {
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedCell?: DependenciesChangedCell): Promise<ProductWithSize[]> {
   const depsBuilder = new DependencyBuilder(); 
-  const outputBuilder = new OutputBuilder();
+  const outputBuilder = new ProductBuilder();
   buildDir = resolve(buildDir);
   for (const actionStore of taskNode.actions) {
     const executeContext: ExecutionContext = {
       stage: flags & FLAGS_STAGE_MASK,
       buildDir,
       depsBuilder,
-      outputBuilder,
+      productsBuilder: outputBuilder,
       taskDir: join(buildDir, taskName),
       forceUpdate: Boolean(flags & FLAGS_FORCE_UPDATE),
     };
@@ -135,7 +135,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
   }
 
   const result = outputBuilder.finalize();
-  taskNode.outputs = result.map(output => output.file);
+  taskNode.products = result.map(output => output.file);
 
   return result;
 }

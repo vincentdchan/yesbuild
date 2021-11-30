@@ -92,7 +92,7 @@ export class TypeScriptExecutor extends ActionExecutor {
       const childPath = path.join(dir, child);
       const stat = fs.statSync(childPath);
       if (stat.isFile() && /(.+)\.d\.ts/.test(child)) {
-        ctx.outputBuilder.push(childPath, stat.size);
+        ctx.productsBuilder.push(childPath, stat.size);
       } else if (stat.isDirectory()) {
         this.__scanOutputs(ctx, childPath);
       }

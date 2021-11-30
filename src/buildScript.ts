@@ -11,7 +11,7 @@ import { DependencyBuilder, Dependencies } from './dependency';
 import { isUndefined, isFunction, isArray, isString } from 'lodash-es';
 import registry, { RegistryContext, ActionExecutorGenerator, ActionResult } from './registry';
 import { ActionExecutor, ExecutionContext } from './actions';
-import { OutputBuilder } from './output';
+import { ProductBuilder } from './product';
 import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
 import { runActionOfTask } from './build';
 import { Stage } from './flags';
@@ -140,7 +140,7 @@ class ScriptTaskRunner {
 
   private __continuation: TaskCollectorContinuation | undefined = undefined;
   private __depsBuilder: DependencyBuilder = new DependencyBuilder();
-  private __outputsBuilder: OutputBuilder = new OutputBuilder();
+  private __productsBuilder: ProductBuilder = new ProductBuilder();
   private __taskDir: string;
 
   public constructor(
@@ -189,11 +189,11 @@ class ScriptTaskRunner {
   private finalize() {
     logger.plusTaskCounter();
     this.taskNode.deps = this.__depsBuilder.finalize();
-    const outputs = this.__outputsBuilder.finalize();
-    this.taskNode.outputs = outputs.map(o => o.file);
-    this.runner.resultPool.set(this.taskName, {
-      outputs,
-    });
+    const products = this.__productsBuilder.finalize();
+    this.taskNode.products = products.map(o => o.file);
+    this.runner.resultPool.set(
+      this.taskName,
+      { products });
   }
 
   private async __testActionExecutor(executor: ActionExecutor): Promise<ActionResult | undefined> {
@@ -214,14 +214,12 @@ class ScriptTaskRunner {
       stage: Stage.Configure,
       buildDir,
       depsBuilder: this.__depsBuilder,
-      outputBuilder: this.__outputsBuilder,
+      productsBuilder: this.__productsBuilder,
       taskDir: path.join(buildDir, this.taskName),
       forceUpdate: false,
     };
     await runActionOfTask(executeContext, this.taskName, store);
-    return {
-      outputs: this.__outputsBuilder.finalize(),
-    }
+    return { products: this.__productsBuilder.finalize() };
   }
 
   private async __yieldResultOfAnotherTask(anotherTaskName: string, store: ActionStore): Promise<ActionResult | undefined> {
@@ -239,7 +237,7 @@ class ScriptTaskRunner {
       stage: Stage.Configure,
       buildDir,
       depsBuilder: this.__depsBuilder,
-      outputBuilder: this.__outputsBuilder,
+      productsBuilder: this.__productsBuilder,
       taskDir: path.join(buildDir, this.taskName),
       forceUpdate: false,
     };

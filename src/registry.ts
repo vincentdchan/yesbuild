@@ -1,8 +1,8 @@
 import { ActionExecutor } from './actions';
-import type { OutputLog } from './output';
+import type { ProductWithSize } from './product';
 
 export interface ActionResult {
-  outputs?: OutputLog[];
+  products?: ProductWithSize[];
 }
 
 export type ActionExecutorGenerator = Generator<ActionExecutor, ActionExecutor | void, ActionResult>;

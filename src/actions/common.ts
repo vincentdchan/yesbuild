@@ -1,11 +1,11 @@
 import { DependencyBuilder } from '../dependency';
-import { OutputBuilder } from '../output';
+import { ProductBuilder } from '../product';
 import { Stage } from '../flags';
 
 export interface ExecutionContext {
   stage: Stage,
   depsBuilder: DependencyBuilder,
-  outputBuilder: OutputBuilder,
+  productsBuilder: ProductBuilder,
   buildDir: string,
 	taskDir: string,
   forceUpdate: boolean,

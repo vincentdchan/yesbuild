@@ -1,7 +1,7 @@
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { isString, isUndefined } from 'lodash-es';
 import { Stage } from '../flags';
-import { Outputs } from '../output';
+import { ProductsWithSize } from '../product';
 import * as fs from 'fs';
 import logger from '../logger';
 import { startServer, InternalServerOptions } from '../server';
@@ -9,8 +9,8 @@ import { startServer, InternalServerOptions } from '../server';
 export interface DevServerOptions {
   host?: string,
   port?: number,
-  outputs?: Outputs | string[],
-  mapOutputs?: string[],
+  products?: ProductsWithSize | string[],
+  mapProducts?: string[],
 }
 
 export class DevServer extends ActionExecutor {
@@ -20,29 +20,29 @@ export class DevServer extends ActionExecutor {
 
   public constructor(options: DevServerOptions) {
     super();
-    let { host, port, outputs, mapOutputs } = options;
+    let { host, port, products, mapProducts } = options;
     host = host || '127.0.0.1';
     port = port || 3000;
 
-    if (isUndefined(mapOutputs)) {
-      mapOutputs = [];
+    if (isUndefined(mapProducts)) {
+      mapProducts = [];
     }
 
-    if (!isUndefined(outputs)) {
-      mapOutputs.length = outputs.length;
-      for (let i = 0; i < outputs.length; i++) {
-        const item = outputs[i];
+    if (!isUndefined(products)) {
+      mapProducts.length = products.length;
+      for (let i = 0; i < products.length; i++) {
+        const item = products[i];
         if (isString(item)) {
-          mapOutputs[i] = item;
+          mapProducts[i] = item;
         } else {
-          mapOutputs[i] = item.file;
+          mapProducts[i] = item.file;
         }
       }
     }
     this.__options = {
       host,
       port,
-      mapOutputs,
+      mapProducts,
     }
   }
 

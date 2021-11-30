@@ -1,7 +1,7 @@
 import { isString, isObjectLike, isUndefined, maxBy } from 'lodash-es';
 import { performance } from 'perf_hooks';
 import { grey, cyan } from 'chalk';
-import type { OutputLog } from './output';
+import type { ProductWithSize } from './product';
 
 export enum LogMode {
   Readable = 0,
@@ -39,7 +39,7 @@ export type ExitCallback = (exitCode: number) => void;
 export class Logger {
 
   public mode: LogMode = LogMode.Readable;
-  private __output: OutputLog[] = [];
+  private __output: ProductWithSize[] = [];
   private __errors: ErrorLog[] = [];
   private __updatedYmlFiles: string[] = [];
   private __beginTime: number;
@@ -157,7 +157,7 @@ export class Logger {
     }
   }
 
-  public addOutput(output: OutputLog) {
+  public addOutput(output: ProductWithSize) {
     this.__output.push(output);
   }
 

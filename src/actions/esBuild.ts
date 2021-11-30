@@ -60,7 +60,7 @@ export class EsbuildBundleExecutor extends ActionExecutor {
     const { outputs } = metafile;
     for (const key of Object.keys(outputs)) {
       const output = outputs[key];
-      ctx.outputBuilder.push(key, output.bytes);
+      ctx.productsBuilder.push(key, output.bytes);
 
       for (const dep of Object.keys(output.inputs)) {
         ctx.depsBuilder.dependFile(dep);
