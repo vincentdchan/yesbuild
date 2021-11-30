@@ -2,8 +2,8 @@ import yesbuild, { uesEsBuild, useParallel,
   useCopy, useTask, useDevServer } from 'yesbuild';
 import { useTypeScript } from '@yesbuild/typescript';
 
-yesbuild.defineTask('tsc', () => {
-  return useTypeScript({
+yesbuild.defineTask('coreType', function*() {
+  yield useTypeScript({
     rootNames: [
       'packages/yesbuild/src/index.ts',
     ],
@@ -12,11 +12,26 @@ yesbuild.defineTask('tsc', () => {
       'emitDeclarationOnly': true,
     },
   });
+  yield useCopy('./build/coreType/**', './packages/yesbuild/dist');
+});
+
+yesbuild.defineTask('tsPluginType', function*() {
+  yield useTypeScript({
+    rootNames: [
+      'packages/yesbuild-typescript/index.ts',
+    ],
+    compilerOptions: {
+      'declaration': true,
+      'emitDeclarationOnly': true,
+    },
+  });
+  yield useCopy('./build/tsPluginType/**', './packages/yesbuild-typescript/dist');
 });
 
 yesbuild.defineTask('release', function*() {
-  yield useTask('tsc');
-  yield useCopy('./build/tsc/**', './packages/yesbuild/dist');
+  yield useTask('coreType');
+  yield useTask('tsPluginType');
+  yield useCopy('./README.md', './packages/yesbuild/');
 });
 
 // yesbuild.defineTask('esbuild', () => uesEsBuild({

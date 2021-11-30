@@ -31,8 +31,13 @@ export class CopyExecutor extends ActionExecutor {
     if (isString(this.__src)) {
       const { default: glob } = await import('glob');
       const result = glob.sync(this.__src);
-      baseDir = result[0];
-      sourceFiles = result.slice(1);
+      if (result.length === 1) {
+        sourceFiles = result;
+        baseDir = process.cwd();
+      } else {
+        baseDir = result[0];
+        sourceFiles = result.slice(1);
+      }
     } else if (isArray(this.__src)) {
       baseDir = process.cwd();
       sourceFiles = this.__src;
