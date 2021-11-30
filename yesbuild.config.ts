@@ -4,7 +4,7 @@ import yesbuild, { uesEsBuild, useTypeScript, useParallel,
 yesbuild.defineTask('tsc', () => {
   return useTypeScript({
     rootNames: [
-      'src/index.ts',
+      'packages/yesbuild/src/index.ts',
     ],
     compilerOptions: {
       'declaration': true,
@@ -14,7 +14,9 @@ yesbuild.defineTask('tsc', () => {
 });
 
 yesbuild.defineTask('esbuild', () => uesEsBuild({
-  entryPoints: ['src/index.ts'],
+  entryPoints: [
+    'packages/yesbuild/src/index.ts',
+  ],
   bundle: true,
   platform: 'node',
   sourcemap: true,
