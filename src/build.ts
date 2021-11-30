@@ -7,7 +7,7 @@ import { Deps, DependenciesChangedCell, DependencyBuilder } from './dependency';
 import { TaskNode, BuildGraph, makeTaskYmlFilename, ActionStore } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
 import { FLAGS_STAGE_MASK, FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
-import { ProductWithSize, ProductsWithSize, ProductBuilder } from './product';
+import { ProductWithSize, ProductBuilder } from './product';
 import logger from './logger';
 
 export interface BuildOptions {
@@ -25,7 +25,7 @@ Is the directory ${grey(resolve(buildDir))} correct?`);
     return;
   }
 
-  const graph = await BuildGraph.loadPartialFromYml(ymlPath);
+  const graph = BuildGraph.loadPartialFromYml(ymlPath);
 
   let changedDepOfMeta: string | undefined = undefined
   if (!(flags & FLAGS_IGNORE_META) && (changedDepOfMeta = graph.needsReconfig(buildDir))) {

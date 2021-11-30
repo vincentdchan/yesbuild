@@ -104,13 +104,16 @@ function findLatestTimeOfOutput(outputs: string[]): [string, number] {
 	return maxBy(times, ([, time]) => time);
 }
 
+/**
+ * Centrail data to store Graph
+ */
 export class BuildGraph {
 
   public readonly tasks: Map<string, TaskNode> = new Map();
   private __metaDeps: Dependencies;
 
-  public static async loadPartialFromYml(path: string): Promise<BuildGraph> {
-    const content = await fs.promises.readFile(path, 'utf-8');
+  public static loadPartialFromYml(path: string): BuildGraph {
+    const content = fs.readFileSync(path, 'utf-8');
     const objs: any = yaml.load(content);
     return BuildGraph.__fromJSON(objs);
   }
@@ -206,6 +209,13 @@ export class BuildGraph {
       collector.taskNamesToUpdate,
       collector.taskDeps
     );
+  }
+
+  public collectAllFilesDeps(entry: string): string[] {
+    const collector = new DependenciesCollector();
+    const entryTask = this.tasks.get(entry);
+    this.__collectTask(collector, entry, entryTask);
+    return [...collector.fileDeps.keys()];
   }
 
   private __addAllSubTasks(collector: DependenciesCollector, entry: string) {

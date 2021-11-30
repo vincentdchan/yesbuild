@@ -18,7 +18,7 @@ yesbuild.defineTask('esbuild', () => uesEsBuild({
   bundle: true,
   platform: 'node',
   sourcemap: true,
-  external: ['typescript']
+  external: ['typescript', 'chokidar']
 }));
 
 yesbuild.defineTask('default', () => useParallel([

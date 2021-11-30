@@ -1,6 +1,7 @@
 import cac from 'cac';
 import configure, { ConfigOptions } from './configure';
 import { build, BuildOptions } from './build';
+import { watch } from './watch';
 import registry, { TaskCallback, ActionResult, ActionExecutorGenerator } from './registry';
 import logger, { LogMode } from './logger';
 import { FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
@@ -27,19 +28,22 @@ cli
   })
 
 cli
-  .command('build <builddir>', 'Build files in building dir')
+  .command('build', 'Build files in building dir')
+  .option('-d, --dir <builddir>', 'Build direcotry', {
+    default: 'build',
+  })
   .option('-t, --task <task>', 'The name of the task to run, use \'*\' to run all', {
     default: 'default',
   })
   .option('-f, --force', 'Force rebuild')
   .option('--log <log>', 'Log type')
   .option('--ignore-meta', 'Do NOT check the original config file')
-  .action((builddir, options) => {
+  .action((options) => {
     let flags = 0;
     flags |= options.force ? FLAGS_FORCE_UPDATE : 0;
     flags |= options.ignoreMeta ? FLAGS_IGNORE_META : 0;
     const buildOptions: BuildOptions = {
-      buildDir: builddir,
+      buildDir: options.dir,
       task: options.task,
       flags,
     };
@@ -53,6 +57,21 @@ cli
       .catch(err => {
         logger.panic(err.toString())
       });
+  })
+
+cli
+  .command('watch', 'Watch files to build automatically')
+  .option('-d, --dir <builddir>', 'Build direcotry', {
+    default: 'build',
+  })
+  .option('-t, --task <task>', 'The name of the task to watch', {
+    default: 'default',
+  })
+  .action((options) => {
+    watch({
+      buildDir: options.dir,
+      taskName: options.task,
+    });
   })
 
 cli.help();
