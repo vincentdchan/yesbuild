@@ -1,17 +1,13 @@
 import { isUndefined } from 'lodash-es';
 import * as fs from 'fs';
 import * as path from 'path';
+import type TsType from 'typescript';
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
-import ts from 'typescript';
 import * as tsconfig from 'tsconfig';
-
-function fileExists(fileName: string) {
-  return ts.sys.fileExists(fileName);
-}
 
 export interface TypeScriptBuildOptions {
   rootNames: string[],
-  compilerOptions?: ts.CompilerOptions,
+  compilerOptions?: TsType.CompilerOptions,
 }
 
 function cleanFilesInDir(dir: string) {
@@ -35,7 +31,7 @@ function cleanFilesInDir(dir: string) {
 export class TypeScriptExecutor extends ActionExecutor {
 
   public static actionName: string = 'typescript'
-  private __program: ts.Program;
+  private __program: TsType.Program;
   private __config: any;
 
   public constructor(private options: TypeScriptBuildOptions) {
@@ -45,14 +41,20 @@ export class TypeScriptExecutor extends ActionExecutor {
     }
   }
 
-  execute(ctx: ExecutionContext) {
+  async execute(ctx: ExecutionContext) {
+    const { default: ts }  = await import('typescript');
+
+    function fileExists(fileName: string) {
+      return ts.sys.fileExists(fileName);
+    }
+
     const configFile = ts.findConfigFile(process.cwd(), fileExists);
     if (!isUndefined(configFile)) {
       this.__config = tsconfig.readFileSync(configFile);
       ctx.depsBuilder.dependFile(configFile);
     }
 
-    let options: ts.CompilerOptions = {};
+    let options: TsType.CompilerOptions = {};
     if (this.__config && 'compilerOptions' in this.__config) {
       Object.assign(options, this.__config.compilerOptions);
     }

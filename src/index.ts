@@ -60,17 +60,17 @@ cli
   })
 
 cli
-  .command('watch', 'Watch files to build automatically')
+  .command('watch [...tasks]', 'Watch files to build automatically')
   .option('-d, --dir <builddir>', 'Build direcotry', {
     default: 'build',
   })
-  .option('-t, --task <task>', 'The name of the task to watch', {
-    default: 'default',
-  })
-  .action((options) => {
+  .action((tasks, options) => {
+    if (tasks.length === 0) {
+      tasks = ['default'];
+    }
     watch({
       buildDir: options.dir,
-      taskName: options.task,
+      taskNames: tasks,
     });
   })
 
