@@ -1,0 +1,16 @@
+{
+  "name": "@yesbuild/visualizer",
+  "private": true,
+  "version": "1.0.0",
+	"scripts": {
+		"config": "yesbuild config"
+	},
+  "devDependencies": {
+    "@types/react": "^17.0.37",
+    "@types/react-dom": "^17.0.11",
+    "@yesbuild/typescript": "workspace:^1.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "yesbuild": "workspace:^1.0.0"
+  }
+}
