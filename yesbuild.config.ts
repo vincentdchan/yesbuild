@@ -38,26 +38,3 @@ yesbuild.defineTask('default', function*() {
   yield useTask('tsPluginType');
   yield useCopy('./README.md', './packages/yesbuild/');
 });
-
-// yesbuild.defineTask('esbuild', () => uesEsBuild({
-//   entryPoints: [
-//     'packages/yesbuild/src/index.ts',
-//   ],
-//   bundle: true,
-//   platform: 'node',
-//   sourcemap: true,
-//   external: ['typescript', 'chokidar', 'esbuild']
-// }));
-
-// yesbuild.defineTask('default', () => useParallel([
-//   'esbuild',
-//   'tsc',
-// ]));
-
-// yesbuild.defineTask('serve', function*() {
-//   yield useCopyFrom('./assets/index.html');
-//   const { products } = yield useTask('esbuild');
-//   return useDevServer({
-//     products,
-//   });
-// });
