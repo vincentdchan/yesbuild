@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { isUndefined } from 'lodash-es';
+import { isUndefined, isString } from 'lodash-es';
 import { ActionExecutor, registerAction, ExecutionContext } from './common';
 import { Stage } from '../flags';
 import { ActionResult } from '../registry';
@@ -12,6 +12,7 @@ interface DevServerProps {
   host?: string,
   port?: number,
   productsMapping?: ProductsMapping,
+  watchTasks?: string[],
 }
 
 export class DevServer extends ActionExecutor<DevServerProps> {
@@ -23,7 +24,7 @@ export class DevServer extends ActionExecutor<DevServerProps> {
   }
 
 	public execute(ctx: ExecutionContext) {
-    const { taskDir } = ctx;
+    const { taskDir, buildDir } = ctx;
     ctx.depsBuilder.addDep('*');
     if (ctx.stage === Stage.Configure) {
       fs.mkdirSync(taskDir, { recursive: true });
@@ -35,11 +36,13 @@ export class DevServer extends ActionExecutor<DevServerProps> {
       if (exitCode !== 0) {
         process.exit(exitCode);
       }
-      const { host, port, productsMapping } = this.props;
+      const { host, port, productsMapping, watchTasks } = this.props;
       const options: InternalServerOptions = {
         host: host || '127.0.0.1',
         port: port || 3000,
         productsMapping,
+        watchTasks,
+        buildDir,
       };
       startServer(taskDir, options);
     })
@@ -74,15 +77,30 @@ function createMappingByResult(results: ActionResult[]): ProductsMapping {
 
 export function useDevServer(props: DevServerExportProps = {}): DevServer {
   let mapping: ProductsMapping | undefined = undefined;
+  let watchTasks: string[] | undefined = undefined;
 
   if (!isUndefined(props.mapResults)) {
     mapping = createMappingByResult(props.mapResults);
+
+    for (const item of props.mapResults) {
+      const { taskName } = item;
+      if (!isString(taskName)) {
+        continue;
+      }
+
+      if (isUndefined(watchTasks)) {
+        watchTasks = [];
+      }
+
+      watchTasks.push(taskName);
+    }
   }
 
   const { port, host } = props;
   const internalProps: DevServerProps = {
     port, host,
     productsMapping: mapping,
+    watchTasks,
   }
   return new DevServer(internalProps);
 }
