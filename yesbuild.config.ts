@@ -33,7 +33,7 @@ yesbuild.defineTask('tsPluginType', function*() {
     { relative: './build/tsPluginType/' });
 });
 
-yesbuild.defineTask('release', function*() {
+yesbuild.defineTask('default', function*() {
   yield useTask('coreType');
   yield useTask('tsPluginType');
   yield useCopy('./README.md', './packages/yesbuild/');

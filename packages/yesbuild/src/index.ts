@@ -1,8 +1,10 @@
 import cac from 'cac';
+import * as fs from 'fs';
 import configure, { ConfigOptions } from './configure';
 import { build, BuildOptions } from './build';
 import { watch } from './watch';
 import registry, { TaskCallback, ActionResult, ActionExecutorGenerator } from './registry';
+import { grey } from 'chalk';
 import logger, { LogMode } from './logger';
 import { FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
 
@@ -27,8 +29,38 @@ cli
       });
   })
 
+async function friendlyBuild(buildDir: string, taskName: string, force: boolean, ignoreMeta: boolean, log?: string) {
+  let flags = 0;
+  flags |= force ? FLAGS_FORCE_UPDATE : 0;
+  flags |= ignoreMeta ? FLAGS_IGNORE_META : 0;
+  const buildOptions: BuildOptions = {
+    buildDir,
+    task: taskName,
+    flags,
+  };
+  if (log === 'json') {
+    logger.mode = LogMode.Data;
+  }
+
+  try {
+    if (!fs.existsSync(buildDir)) {
+      console.log(`Directory ${grey(buildDir)} not exist, begin to config...`);
+      await configure({
+        buildDir,
+      });
+      logger.printAndExit();
+      return;
+    }
+
+    await build(buildOptions);
+    logger.printAndExit();
+  } catch (err) {
+    logger.panic(err.toString());
+  }
+}
+
 cli
-  .command('build', 'Build files in building dir')
+  .command('', 'Build files in building dir')
   .option('-d, --dir <builddir>', 'Build direcotry', {
     default: 'build',
   })
@@ -39,24 +71,7 @@ cli
   .option('--log <log>', 'Log type')
   .option('--ignore-meta', 'Do NOT check the original config file')
   .action((options) => {
-    let flags = 0;
-    flags |= options.force ? FLAGS_FORCE_UPDATE : 0;
-    flags |= options.ignoreMeta ? FLAGS_IGNORE_META : 0;
-    const buildOptions: BuildOptions = {
-      buildDir: options.dir,
-      task: options.task,
-      flags,
-    };
-    if (options.log === 'json') {
-      logger.mode = LogMode.Data;
-    }
-    build(buildOptions)
-      .then(() => {
-        logger.printAndExit()
-      })
-      .catch(err => {
-        logger.panic(err.toString())
-      });
+    friendlyBuild(options.dir, options.task, options.force, options.ignoreMeta, options.log);
   })
 
 cli

@@ -1,12 +1,11 @@
 import {
-  ActionExecutor,
   EsbuildBundleExecutor,
   EsBuildProps,
   ParallelExecutor,
   CopyExecutor,
   AnotherTask,
-  DevServerProps,
-  DevServer,
+  DevServerExportProps,
+  useDevServer
 } from './actions';
 import { runningTaskRunner } from './buildScript';
 
@@ -30,8 +29,8 @@ export function useTask(taskName: string): AnotherTask {
   return new AnotherTask(taskName);
 }
 
-export function useDevServer(options: DevServerProps = {}): DevServer {
-  return new DevServer(options);
+export {
+  EsBuildProps,
+  DevServerExportProps,
+  useDevServer,
 }
-
-export { EsBuildProps as BuildOptions, DevServerProps as DevServerOptions }

@@ -4,13 +4,17 @@ import { Stage } from '../flags';
 import { ProductsWithSize } from '../product';
 import * as fs from 'fs';
 import logger from '../logger';
+import { ActionResult } from '../registry';
 import { startServer, InternalServerOptions } from '../server';
 
-export interface DevServerProps {
+interface ProductsMapping {
+  [key: string]: string,
+}
+
+interface DevServerProps {
   host?: string,
   port?: number,
-  products?: ProductsWithSize | string[],
-  mapProducts?: string[],
+  productsMapping?: ProductsMapping,
 }
 
 export class DevServer extends ActionExecutor<DevServerProps> {
@@ -66,3 +70,13 @@ export class DevServer extends ActionExecutor<DevServerProps> {
 }
 
 registerAction(DevServer);
+
+export interface DevServerExportProps {
+  host?: string,
+  port?: number,
+  mapResults?: ActionResult[],
+}
+
+export function useDevServer(options: DevServerProps = {}): DevServer {
+  return new DevServer(options);
+}
