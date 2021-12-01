@@ -49,7 +49,7 @@ export interface ActionExecutorConstructor<T = undefined> {
 
 const actionRegistry: Map<string, ActionExecutorConstructor<any>> = new Map();
 
-export function registerAction<T>(ctr: ActionExecutorConstructor<T>) {
+export function mount<T>(ctr: ActionExecutorConstructor<T>) {
   const { actionName } = ctr;
   actionRegistry.set(actionName, ctr);
 }

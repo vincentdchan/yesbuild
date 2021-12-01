@@ -1,5 +1,5 @@
 import { fork } from 'child_process';
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 import { green } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import logger from '../logger';
@@ -76,4 +76,4 @@ export class ParallelExecutor extends ActionExecutor<string[]> {
 
 }
 
-registerAction(ParallelExecutor);
+mount(ParallelExecutor);

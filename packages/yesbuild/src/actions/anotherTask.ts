@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 import { Stage } from '../flags';
 
 export class AnotherTask extends ActionExecutor<string> {
@@ -17,4 +17,4 @@ export class AnotherTask extends ActionExecutor<string> {
 
 }
 
-registerAction(AnotherTask);
+mount(AnotherTask);

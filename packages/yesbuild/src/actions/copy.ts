@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 import { isString, isArray, isUndefined } from 'lodash-es';
 import { join, relative, dirname } from 'path';
 import * as fs from 'fs';
@@ -75,4 +75,4 @@ export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
 
 }
 
-registerAction(CopyExecutor);
+mount(CopyExecutor);

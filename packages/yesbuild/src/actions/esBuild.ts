@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 import {
   build as esbuild,
   BuildOptions as EsBuildOptions,
@@ -70,4 +70,4 @@ export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
 
 }
 
-registerAction(EsbuildBundleExecutor);
+mount(EsbuildBundleExecutor);

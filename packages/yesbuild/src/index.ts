@@ -102,7 +102,7 @@ export {
   ActionExecutor,
   ActionExecutorConstructor,
   ExecutionContext,
-  registerAction,
+  mount,
   getAction,
 } from './actions';
 export { TaskCallback, ConfigOptions, ActionResult, ActionExecutorGenerator };

@@ -1,4 +1,4 @@
-import { ActionExecutor, registerAction, ExecutionContext } from 'yesbuild';
+import { ActionExecutor, mount, ExecutionContext } from 'yesbuild';
 import { isUndefined } from 'lodash-es';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -112,7 +112,7 @@ export class TypeScriptExecutor extends ActionExecutor<TypeScriptBuildOptions> {
 
 }
 
-registerAction(TypeScriptExecutor);
+mount(TypeScriptExecutor);
 
 export function useTypeScript(options: TypeScriptBuildOptions): TypeScriptExecutor {
   return new TypeScriptExecutor(options);

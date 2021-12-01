@@ -1,6 +1,8 @@
 import Koa from 'koa';
 import { grey } from 'chalk';
 import { isArray } from 'lodash-es';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { serveStatic } from './middlewares';
 import { ServerContext } from './context';
 import { watch } from '../watch';
@@ -40,6 +42,26 @@ export function startServer(staticDir: string, options: InternalServerOptions) {
   }
 
   const { host, port } = options;
+  const wss = new WebSocketServer({ noServer: true });
+
+  wss.on('connection', function connection(ws) {
+    console.log('received connection');
+  });
+
+  const httpServer = createServer(app.callback());
+  httpServer.on('upgrade', function(request, socket, head) {
+    const { pathname } = new URL(request.url);
+
+    if (pathname === '/yesbuild-ws') {
+      wss.handleUpgrade(request, socket as any, head, function done(ws) {
+        wss.emit('connection', ws, request);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
+
   console.log(`Listening on ${grey('http://' + host + ':' + port)}`)
-  app.listen(port);
+
+  httpServer.listen(port);
 }

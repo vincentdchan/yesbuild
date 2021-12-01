@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { isUndefined, isString } from 'lodash-es';
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 import { Stage } from '../flags';
 import { ActionResult } from '../registry';
 import { startServer, InternalServerOptions, ProductsMapping } from '../server';
@@ -50,7 +50,7 @@ export class DevServer extends ActionExecutor<DevServerProps> {
 
 }
 
-registerAction(DevServer);
+mount(DevServer);
 
 export interface DevServerExportProps {
   host?: string,
