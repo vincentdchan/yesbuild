@@ -1,8 +1,7 @@
-import { ActionExecutor, mount, ExecutionContext } from './common';
 import { isString, isArray, isUndefined } from 'lodash-es';
 import { join, relative, dirname } from 'path';
 import * as fs from 'fs';
-import { Stage } from '../flags';
+import { ActionExecutor, mount, ExecutionContext } from './common';
 
 export interface CopyExecutorProps {
   src: string | string[];
@@ -34,8 +33,8 @@ export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
     }
 
     if (isString(this.__src)) {
-      const { default: glob } = await import('glob');
-      sourceFiles = glob.sync(this.__src);
+      const { default: fg } = await import('fast-glob');
+      sourceFiles = fg.sync(this.__src);
     } else if (isArray(this.__src)) {
       sourceFiles = this.__src;
     }

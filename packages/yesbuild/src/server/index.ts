@@ -52,7 +52,7 @@ export function startServer(staticDir: string, options: InternalServerOptions) {
   httpServer.on('upgrade', function(request, socket, head) {
     const { pathname } = new URL(request.url);
 
-    if (pathname === '/yesbuild-ws') {
+    if (pathname === '/__yesbuild_ws') {
       wss.handleUpgrade(request, socket as any, head, function done(ws) {
         wss.emit('connection', ws, request);
       });

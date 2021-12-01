@@ -2,6 +2,7 @@ import Koa from 'koa';
 import send from 'koa-send';
 import { resolve } from 'path';
 import { isUndefined } from 'lodash-es';
+import { injectHTML } from './inject';
 import type { KoaContext, YesContext } from './index';
 
 export function serveStatic(serveDir: string): Koa.Middleware<Koa.DefaultState, YesContext> {
@@ -12,6 +13,7 @@ export function serveStatic(serveDir: string): Koa.Middleware<Koa.DefaultState, 
     if (ctx.body != null || ctx.status !== 404) return // eslint-disable-line
 
     if (ctx.request.path === '/') {
+      injectHTML('<html></html>');  // @TODO:(Vincent Chan) remember to handle error
       await send(ctx, 'index.html', {
         root: resolve(serveDir),
       });

@@ -1,14 +1,18 @@
 
 ESBUILD=./node_modules/.bin/esbuild
 
-all: clean core ts-plugin bootstrap
+all: clean core client ts-plugin bootstrap
 	echo "Done!"
 
 core:
-	$(ESBUILD) --bundle packages/yesbuild/src/index.ts --outfile=dist/index.js --platform=node --external:chokidar --external:esbuild --external:typescript --external:glob --sourcemap
+	$(ESBUILD) --bundle packages/yesbuild/src/index.ts --outfile=dist/index.js --minify --platform=node --external:chokidar --external:esbuild --external:fast-glob --sourcemap
 	mkdir -p packages/yesbuild/dist
 	cp dist/index.js packages/yesbuild/dist/index.js
 	cp dist/index.js.map packages/yesbuild/dist/index.js.map
+
+client: packages/yesbuild/client/index.ts
+	$(ESBUILD) --bundle packages/yesbuild/client/index.ts --minify --outfile=dist/client.js --platform=browser --sourcemap=inline
+	cp dist/client.js packages/yesbuild/dist/client.js
 
 ts-plugin:
 	$(ESBUILD) --bundle packages/yesbuild-typescript/index.ts --outfile=dist/yesbuild-typescript.js --platform=node --external:yesbuild --external:typescript --external:tsconfig --sourcemap
