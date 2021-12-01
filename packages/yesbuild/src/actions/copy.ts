@@ -1,6 +1,7 @@
 import { isString, isArray, isUndefined } from 'lodash-es';
 import { join, relative, dirname } from 'path';
 import * as fs from 'fs';
+import fg from 'fast-glob';
 import { ActionExecutor, mount, ExecutionContext } from './common';
 
 export interface CopyExecutorProps {
@@ -22,7 +23,7 @@ export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
   }
 
   // only copy when configure
-	public async execute(ctx: ExecutionContext): Promise<void> {
+	public execute(ctx: ExecutionContext) {
     let sourceFiles: string [];
     let relativeDir: string;
 
@@ -33,7 +34,6 @@ export class CopyExecutor extends ActionExecutor<CopyExecutorProps> {
     }
 
     if (isString(this.__src)) {
-      const { default: fg } = await import('fast-glob');
       sourceFiles = fg.sync(this.__src);
     } else if (isArray(this.__src)) {
       sourceFiles = this.__src;

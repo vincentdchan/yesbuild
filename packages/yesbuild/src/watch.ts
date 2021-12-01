@@ -1,11 +1,13 @@
 import chokidar from 'chokidar';
 import { resolve } from 'path';
-import { green, grey, cyan, red } from 'chalk';
+import { green, grey, red } from 'chalk';
 import { fork, ChildProcess } from 'child_process';
-import { isUndefined, debounce } from 'lodash-es';
+import { isUndefined, debounce, isArray } from 'lodash-es';
 import { performance } from 'perf_hooks';
 import { BuildGraph } from './buildGraph';
 import logger from './logger';
+
+export type WatchFinishedCallback = () => any;
 
 class AsyncTask {
 
@@ -63,6 +65,7 @@ class WatchContext {
     public readonly graph: BuildGraph,
     public readonly buildDir: string,
     public readonly taskNames: string[],
+    private finished?: WatchFinishedCallback[],
   ) {}
 
   public collectFileDepsByEntries() {
@@ -140,6 +143,18 @@ class WatchContext {
 
     if (task.next) {
       this.__runTask(task.next);
+    } else {
+      this.__emitAllCallbacks();
+    }
+  }
+
+  private __emitAllCallbacks() {
+    if (!isArray(this.finished)) {
+      return;
+    }
+
+    for (const cb of this.finished) {
+      cb();
     }
   }
 
@@ -148,12 +163,13 @@ class WatchContext {
 export interface WatchOptions {
   buildDir: string;
   taskNames: string[],
+  finished?: WatchFinishedCallback[],
 }
 
 export function watch(options: WatchOptions) {
-  const { buildDir, taskNames } = options;
+  const { buildDir, taskNames, finished } = options;
   const graph = new BuildGraph(buildDir);
-  const context = new WatchContext(graph, buildDir, taskNames);
+  const context = new WatchContext(graph, buildDir, taskNames, finished);
 
   for (const taskName of taskNames) {
     const taskNode = graph.loadTask(taskName);

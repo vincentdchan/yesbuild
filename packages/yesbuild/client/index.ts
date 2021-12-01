@@ -1,11 +1,8 @@
+import { isString } from 'lodash-es';
 
 function main() {
   let url = 'ws://';
   url += window.location.host;
-  if (window.location.port.length > 0) {
-    url += ':'
-    url += window.location.port;
-  }
   url += '/__yesbuild_ws';
   const socket = new WebSocket(url);
 
@@ -14,7 +11,17 @@ function main() {
   });
 
   socket.addEventListener('message', function (event) {
-    console.log('Message from server ', event.data);
+    if (!isString(event.data)) {
+      return;
+    }
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'YESBUILD_FORCE_REFRESH') {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   });
 }
 

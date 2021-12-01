@@ -34,31 +34,28 @@ export function startServer(staticDir: string, options: InternalServerOptions) {
   });
   app.use(serveStatic(staticDir));
 
+  function handleBuildFinished() {
+    serverContext.notifyAllClientsToUpdate();
+  }
+
   if (isArray(options.watchTasks)) {
     watch({
       buildDir: options.buildDir,
       taskNames: options.watchTasks,
-    })
+      finished: [handleBuildFinished],
+    });
   }
 
-  const { host, port } = options;
-  const wss = new WebSocketServer({ noServer: true });
+  const httpServer = createServer(app.callback());
 
-  wss.on('connection', function connection(ws) {
-    console.log('received connection');
+  const { host, port } = options;
+  const wss = new WebSocketServer({
+    server: httpServer,
+    path: '/__yesbuild_ws',
   });
 
-  const httpServer = createServer(app.callback());
-  httpServer.on('upgrade', function(request, socket, head) {
-    const { pathname } = new URL(request.url);
-
-    if (pathname === '/__yesbuild_ws') {
-      wss.handleUpgrade(request, socket as any, head, function done(ws) {
-        wss.emit('connection', ws, request);
-      });
-    } else {
-      socket.destroy();
-    }
+  wss.on('connection', function(ws) {
+    serverContext.addClient(ws);
   });
 
   console.log(`Listening on ${grey('http://' + host + ':' + port)}`)

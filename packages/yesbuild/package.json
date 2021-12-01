@@ -14,7 +14,7 @@
   "dependencies": {
     "chokidar": "^3.5.2",
     "esbuild": "^0.13.15",
-    "fast-glob": "^3.2.7"
+    "node-html-parser": "^5.1.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.5",
@@ -25,11 +25,11 @@
     "@types/ws": "^8.2.1",
     "cac": "^6.7.12",
     "chalk": "^4.1.2",
+    "fast-glob": "^3.2.7",
     "js-yaml": "^4.1.0",
     "koa": "^2.13.4",
     "koa-send": "^5.0.1",
     "lodash-es": "^4.17.21",
-    "node-html-parser": "^5.1.0",
     "typescript": "^4.5.2",
     "ws": "^8.3.0"
   }

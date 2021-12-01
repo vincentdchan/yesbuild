@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 
 function App() {
 	return(
-		<div>Hello world</div>
+		<div>Hello world, Yesbuild!</div>
 	);
 }
 
