@@ -2,10 +2,10 @@
   "name": "@yesbuild/visualizer",
   "private": true,
   "version": "1.0.0",
-	"scripts": {
-		"config": "yesbuild",
+  "scripts": {
+    "config": "yesbuild",
     "start": "yesbuild -t serve"
-	},
+  },
   "devDependencies": {
     "@types/react": "^17.0.37",
     "@types/react-dom": "^17.0.11",
@@ -13,5 +13,9 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "yesbuild": "workspace:^1.0.0"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.7.0",
+    "@emotion/styled": "^11.6.0"
   }
 }
