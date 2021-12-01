@@ -23,7 +23,7 @@ export function serveStatic(serveDir: string): Koa.Middleware<Koa.DefaultState, 
         root: resolve(serveDir),
       });
     } catch (err) {
-      const path = ctx.request.path.slice(1);  // remove '/'
+      const path = ctx.request.path;
       const fullPath = ctx.serverContext.tryGetProduct(path);
       if (isUndefined(fullPath)) {
         throw err

@@ -1,19 +1,17 @@
-import * as path from 'path';
+
+export interface ProductsMapping {
+  [key: string]: string,
+}
+
 
 // handle products mappings
 export class ServerContext {
 
-	#mappings: Map<string, string> = new Map();
+  public constructor(private productsMapping: ProductsMapping) {
+  }
 
-	public constructor(mapOutputs: string[]) {
-		for (const outputPath of mapOutputs) {
-			const basename = path.basename(outputPath);
-			this.#mappings.set(basename, outputPath);
-		}
-	}
-
-	public tryGetProduct(name: string) {
-		return this.#mappings.get(name);
-	}
+  public tryGetProduct(name: string) {
+    return this.productsMapping[name];
+  }
 
 }

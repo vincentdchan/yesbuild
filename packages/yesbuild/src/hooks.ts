@@ -7,11 +7,6 @@ import {
   DevServerExportProps,
   useDevServer
 } from './actions';
-import { runningTaskRunner } from './buildScript';
-
-export function useTaskDir(): string {
-  return runningTaskRunner.taskDir;
-}
 
 export function uesEsBuild(options: EsBuildProps): EsbuildBundleExecutor {
   return new EsbuildBundleExecutor(options);
@@ -29,6 +24,7 @@ export function useTask(taskName: string): AnotherTask {
   return new AnotherTask(taskName);
 }
 
+export { useTaskDir, useBuildDir } from './buildScript';
 export {
   EsBuildProps,
   DevServerExportProps,

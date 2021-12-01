@@ -1,15 +1,12 @@
-import { ActionExecutor, registerAction, ExecutionContext } from './common';
-import { isString, isUndefined } from 'lodash-es';
-import { Stage } from '../flags';
-import { ProductsWithSize } from '../product';
 import * as fs from 'fs';
-import logger from '../logger';
+import * as path from 'path';
+import { isUndefined } from 'lodash-es';
+import { ActionExecutor, registerAction, ExecutionContext } from './common';
+import { Stage } from '../flags';
 import { ActionResult } from '../registry';
-import { startServer, InternalServerOptions } from '../server';
-
-interface ProductsMapping {
-  [key: string]: string,
-}
+import { startServer, InternalServerOptions, ProductsMapping } from '../server';
+import { useBuildDir } from '../buildScript';
+import logger from '../logger';
 
 interface DevServerProps {
   host?: string,
@@ -20,34 +17,9 @@ interface DevServerProps {
 export class DevServer extends ActionExecutor<DevServerProps> {
 
   public static actionName: string = 'internal:devServer';
-  private __options: InternalServerOptions;
 
   public constructor(props: DevServerProps) {
     super(props);
-    let { host, port, products, mapProducts } = props;
-    host = host || '127.0.0.1';
-    port = port || 3000;
-
-    if (isUndefined(mapProducts)) {
-      mapProducts = [];
-    }
-
-    if (!isUndefined(products)) {
-      mapProducts.length = products.length;
-      for (let i = 0; i < products.length; i++) {
-        const item = products[i];
-        if (isString(item)) {
-          mapProducts[i] = item;
-        } else {
-          mapProducts[i] = item.file;
-        }
-      }
-    }
-    this.__options = {
-      host,
-      port,
-      mapProducts,
-    }
   }
 
 	public execute(ctx: ExecutionContext) {
@@ -63,7 +35,13 @@ export class DevServer extends ActionExecutor<DevServerProps> {
       if (exitCode !== 0) {
         process.exit(exitCode);
       }
-      startServer(taskDir, this.__options);
+      const { host, port, productsMapping } = this.props;
+      const options: InternalServerOptions = {
+        host: host || '127.0.0.1',
+        port: port || 3000,
+        productsMapping,
+      };
+      startServer(taskDir, options);
     })
   }
 
@@ -77,6 +55,34 @@ export interface DevServerExportProps {
   mapResults?: ActionResult[],
 }
 
-export function useDevServer(options: DevServerProps = {}): DevServer {
-  return new DevServer(options);
+// only run in the task runner, or it will crahsh
+function createMappingByResult(results: ActionResult[]): ProductsMapping {
+  const mapping = Object.create(null);
+
+  for (const item of results) {
+    const relativeDir = item.taskDir || useBuildDir();
+    for (const product of item.products) {
+      const filePath = product.file;
+      let key = path.relative(relativeDir, filePath);
+      key = '/' + key;
+      mapping[key] = filePath;
+    }
+  }
+
+  return mapping;
+}
+
+export function useDevServer(props: DevServerExportProps = {}): DevServer {
+  let mapping: ProductsMapping | undefined = undefined;
+
+  if (!isUndefined(props.mapResults)) {
+    mapping = createMappingByResult(props.mapResults);
+  }
+
+  const { port, host } = props;
+  const internalProps: DevServerProps = {
+    port, host,
+    productsMapping: mapping,
+  }
+  return new DevServer(internalProps);
 }

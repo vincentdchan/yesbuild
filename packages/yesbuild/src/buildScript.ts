@@ -10,9 +10,9 @@ import {
 import { DependencyBuilder, Dependencies } from './dependency';
 import { isUndefined, isFunction, isArray, isString } from 'lodash-es';
 import registry, { RegistryContext, ActionExecutorGenerator, ActionResult } from './registry';
-import { ActionExecutor, ExecutionContext } from './actions';
+import { AnotherTask, ActionExecutor, ExecutionContext } from './actions';
 import { ProductBuilder } from './product';
-import { BuildGraph, TaskNode, ActionStore, makeTaskNode } from './buildGraph';
+import { BuildGraph, TaskNode, ActionStore } from './buildGraph';
 import { runActionOfTask } from './build';
 import { Stage } from './flags';
 import logger from './logger';
@@ -154,6 +154,10 @@ class ScriptTaskRunner {
     return this.__taskDir;
   }
 
+  get buildDir() {
+    return this.runner.buildDir;
+  }
+
   public async run() {
     const task = this.runner.registry.tasks.get(this.taskName);
     if (!task) {
@@ -200,7 +204,7 @@ class ScriptTaskRunner {
       name: (executor.constructor as any).actionName,
       props,
     }
-    if (store.name === 'anotherTask') {
+    if (store.name === AnotherTask.actionName) {
       return this.__yieldResultOfAnotherTask(props,  store);
     }
 
@@ -244,6 +248,7 @@ class ScriptTaskRunner {
     return {
       products: anotherTaskNode.products,
       taskDir: path.join(buildDir, anotherTaskName),
+      taskName: anotherTaskName,
     };
   }
 
@@ -308,4 +313,10 @@ export function executeTaskToCollectDeps(graph: BuildGraph, registry: RegistryCo
   return taskRunner.run();
 }
 
-export { runningTaskRunner }
+export function useTaskDir(): string {
+  return runningTaskRunner.taskDir;
+}
+
+export function useBuildDir(): string {
+  return runningTaskRunner.buildDir;
+}

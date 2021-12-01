@@ -6,7 +6,7 @@
   ],
   "scripts": {
     "bootstrap": "esbuild --bundle packages/yesbuild/src/index.ts --outdir=dist --platform=node --external:chokidar --external:esbuild --external:typescript --sourcemap",
-    "build": "yesbuild build -t release"
+    "build": "yesbuild build"
   },
   "engines": {
     "node": ">=12.0.0"

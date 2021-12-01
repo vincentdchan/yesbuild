@@ -3,10 +3,14 @@ import { serveStatic } from './middlewares';
 import { ServerContext } from './context';
 import { grey } from 'chalk';
 
+export interface ProductsMapping {
+  [key: string]: string,
+}
+
 export interface InternalServerOptions {
   host: string,
   port: number,
-  mapProducts: string[],
+  productsMapping?: ProductsMapping,
 }
 
 export interface YesContext extends Koa.DefaultContext {
@@ -16,7 +20,7 @@ export interface YesContext extends Koa.DefaultContext {
 export type KoaContext = Koa.ParameterizedContext<Koa.DefaultState, YesContext>;
 
 export function startServer(staticDir: string, options: InternalServerOptions) {
-  const serverContext = new ServerContext(options.mapProducts);
+  const serverContext = new ServerContext(options.productsMapping || Object.create(null));
   const app = new Koa<Koa.DefaultState, YesContext>();
   app.use((ctx, next) => {
     ctx.serverContext = serverContext;

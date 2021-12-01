@@ -3,8 +3,8 @@
   "private": true,
   "version": "1.0.0",
 	"scripts": {
-		"config": "yesbuild config",
-    "start": "yesbuild build -t serve"
+		"config": "yesbuild",
+    "start": "yesbuild -t serve"
 	},
   "devDependencies": {
     "@types/react": "^17.0.37",
