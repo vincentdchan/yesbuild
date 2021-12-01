@@ -241,7 +241,10 @@ class ScriptTaskRunner {
     };
     await runActionOfTask(executeContext, this.taskName, store);
 
-    return anotherTaskNode;
+    return {
+      products: anotherTaskNode.products,
+      taskDir: path.join(buildDir, anotherTaskName),
+    };
   }
 
   private async __testActionExecutorGenerator(generator: ActionExecutorGenerator): Promise<void> {

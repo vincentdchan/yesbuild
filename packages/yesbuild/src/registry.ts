@@ -3,6 +3,7 @@ import type { ProductWithSize } from './product';
 
 export interface ActionResult {
   products?: ProductWithSize[];
+  taskDir?: string;  // only available
 }
 
 export type ActionExecutorGenerator = Generator<ActionExecutor<any>, ActionExecutor<any> | void, ActionResult>;
