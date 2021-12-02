@@ -9,27 +9,30 @@ A scable and extensible build system for the Web ecosystem.
 - Fast and incremental build *WITHOUT* resident process
 - Parallel
 - Simple syntaxes to config
-- Easy to composite
+- Easy to compose
 - Easy to know what happended
 - Full typed plugin API
 - Easy to integrate with other bundlers
 
 ## Why
 
-Currently, most the bundles hide the details internally.
+Currently, most of the bundlers hide the details internally.
 When the project become large, the dependencies become complex.
 There is no way to understand how to optimize the procedures.
 
 Besides, it's hard for a bundler to build incrementally.
 Mosts of the tools load everything into the memory to implement hot reload, 
 that's a disaster for a very large project.
-It will cost more than 10Gb and there
+It will cost Gb level memory and there
 is no way to debug.
 
 Yesbuild is a friendly tool for you to make your own building procedures.
-All the tasks are persistent.
+It divides the building procedure into multiple tasks.
+Tasks can be composed, and can be excuted standalone.
+And they are persistent.
+
 It makes your building procedure more reasonable, more easy to
-compositing things.
+compose things.
 
 ## Install
 
@@ -78,9 +81,21 @@ Type `yesbuild` in shell to run:
 yesbuild
 ```
 
+And the procedure begins...
+
+When you type `yesbuild` again, the magic happens:
+
+![](./docs/screenshot-1.png)
+
+Nothing changes because the Yesbuild knows that your source files
+don't changed. If you modified your source files, Yesbuild
+will execute the action next time you build.
+
 ### Simple example to start a dev server
 
-You can easily use the internal actions to build a dev server.
+This example demonstrates how to compose tasks.
+
+You can use the result of a task as the input to another task.
 
 ```typescript
 import yesbuild, { uesEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild';
@@ -102,10 +117,10 @@ yesbuild.defineTask('serve', function* () {
   yield useCopy('./assets/index.html', taskDir, {
     relative: './assets/'
   });
-  const result = yield useTask('preview');  // get the result of preview task
+  const result = yield useTask('preview');  // get the result of the preview task
   return useDevServer({
     port: 3000,
-    mapResults: [result],
+    mapResults: [result],  // dev server will map resources to other tasks
   });
 });
 ```
@@ -132,6 +147,8 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 |------|--------------|----------|
 | useTypescript | `@yesbuild/typescript` | `packages/yesbuild-typescript` |
 
+More and more actions will be added...
+
 ## Write your own action
 
-Check `docs/CONTRIBUTING.md`
+Check [contributing guide](./docs/CONTRIBUTING.md).

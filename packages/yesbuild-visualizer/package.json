@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "config": "yesbuild",
+    "build": "yesbuild -t preview",
     "start": "yesbuild -t serve"
   },
   "devDependencies": {
