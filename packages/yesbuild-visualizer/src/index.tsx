@@ -4,9 +4,11 @@ import { isArray } from 'lodash-es';
 const nodes = [];
 const links = [];
 
-const ROOT_VAL = 30;
+const YML_VAL = 3;
+const TASK_VAL = 1.5;
+const FILE_VAL = 1;
 
-function putNode(id, group, name, val) {
+function putNode(id, group, name, val?) {
   nodes.push({ id, group, name, val });
 }
 
@@ -22,7 +24,13 @@ function showGraph() {
   const graph = ForceGraph();
   graph(element)
     .nodeAutoColorBy('group')
-    .graphData({ nodes, links });
+    .d3AlphaDecay(0.01)
+    .d3VelocityDecay(0.08)
+    .graphData({ nodes, links })
+    .onNodeDragEnd(node => {
+      node.fx = node.x;
+      node.fy = node.y;
+    });
 }
 
 function removeElement(element: HTMLElement) {
@@ -78,7 +86,7 @@ function main() {
         const depObjs = jsYaml.load(content);
         console.log(depObjs);
         const id = 'yml:' + name;
-        putNode(id, 'file', name, ROOT_VAL);
+        putNode(id, 'yml', name, YML_VAL);
         handleYmlFile(id, depObjs, 1);
       }
 
@@ -86,6 +94,8 @@ function main() {
       showGraph();
     } catch (err) {
       console.error(err);
+      dropZone.classList.remove('dragover');
+      window.alert('Read files failed, please drag the correct files...');
     }
   }
 
@@ -99,7 +109,7 @@ function main() {
     if (isArray(objs.tasks)) {
       for (const task of objs.tasks) {
         const id = 'task:' + task.name;
-        putNode(id, 'task', task.name, ROOT_VAL - depth * 5);
+        putNode(id, 'task', task.name, TASK_VAL);
         putLink(id, ymlId);
         if (isArray(task.deps)) {
           for (const dep of task.deps) {
@@ -120,8 +130,9 @@ function main() {
       if (createdFile.has(fileName)) {
         putLink(id, parentId);
       } else {
-        putNode(id, 'file', fileName, 5);
+        putNode(id, 'file', fileName, FILE_VAL);
         putLink(id, parentId);
+        createdFile.add(fileName);
       }
     } else if (dep.startsWith('task://')) {
       const toTaskName = dep.slice('task://'.length);

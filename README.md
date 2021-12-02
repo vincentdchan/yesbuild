@@ -159,3 +159,11 @@ More and more actions will be added...
 ## Write your own action
 
 Check [contributing guide](./docs/CONTRIBUTING.md).
+
+## Visualization
+
+Running the project in `packages/yesbuild-visualizer/`
+which is built yesbuild. Drag your files in the build folder
+into it and you can view the dependencies in the browser.
+
+![](./docs/screenshot-2.png)
