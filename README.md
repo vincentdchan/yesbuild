@@ -6,7 +6,7 @@ A scable and extensible build system for the Web ecosystem.
 ## Features
 
 - Automatically dependencies tracing
-- Fast and incremental build
+- Fast and incremental build *WITHOUT* resident process
 - Parallel
 - Simple syntaxes to config
 - Easy to composite
@@ -21,11 +21,13 @@ When the project become large, the dependencies become complex.
 There is no way to understand how to optimize the procedures.
 
 Besides, it's hard for a bundler to build incrementally.
-A lot of `cache-loader`s are used to implement this,
-but it's not very friendly. The users have no idea what
-files have been cached.
+Mosts of the tools load everything into the memory to implement hot reload, 
+that's a disaster for a very large project.
+It will cost more than 10Gb and there
+is no way to debug.
 
 Yesbuild is a friendly tool for you to make your own building procedures.
+All the tasks are persistent.
 It makes your building procedure more reasonable, more easy to
 compositing things.
 
@@ -58,9 +60,9 @@ Make a new file named `yesbuild.config.js` in your project directory.
 Define a task:
 
 ```typescript
-import yesbuild, { uesEsBuild } from 'yesbuild';
+import yesbuild, { useEsBuild } from 'yesbuild';
 
-yesbuild.defineTask('preview', () => uesEsBuild({
+yesbuild.defineTask('preview', () => useEsBuild({
     entryPoints: ['./src/index.tsx'],
     bundle: true,
     format: 'esm',

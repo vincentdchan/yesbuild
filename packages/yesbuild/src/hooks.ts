@@ -8,7 +8,7 @@ import {
   useDevServer
 } from './actions';
 
-export function uesEsBuild(options: EsBuildProps): EsbuildBundleExecutor {
+export function useEsBuild(options: EsBuildProps): EsbuildBundleExecutor {
   return new EsbuildBundleExecutor(options);
 }
 
