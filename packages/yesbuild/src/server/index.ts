@@ -15,8 +15,7 @@ export interface InternalServerOptions {
   host: string,
   port: number,
   buildDir: string,
-  productsMapping?: ProductsMapping,
-  watchTasks?: string[],
+  mapTasks: string[],
 }
 
 export interface YesContext extends Koa.DefaultContext {
@@ -26,7 +25,7 @@ export interface YesContext extends Koa.DefaultContext {
 export type KoaContext = Koa.ParameterizedContext<Koa.DefaultState, YesContext>;
 
 export function startServer(staticDir: string, options: InternalServerOptions) {
-  const serverContext = new ServerContext(options.productsMapping || Object.create(null));
+  const serverContext = new ServerContext(options.buildDir, options.mapTasks);
   const app = new Koa<Koa.DefaultState, YesContext>();
   app.use((ctx, next) => {
     ctx.serverContext = serverContext;
@@ -38,10 +37,10 @@ export function startServer(staticDir: string, options: InternalServerOptions) {
     serverContext.notifyAllClientsToUpdate();
   }
 
-  if (isArray(options.watchTasks)) {
+  if (options.mapTasks.length > 0) {
     watch({
       buildDir: options.buildDir,
-      taskNames: options.watchTasks,
+      taskNames: options.mapTasks,
       finished: [handleBuildFinished],
     });
   }

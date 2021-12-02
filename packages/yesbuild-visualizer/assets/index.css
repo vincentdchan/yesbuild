@@ -1,0 +1,15 @@
+
+#drop_zone {
+  position: fixed;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  left: 0px;
+  top: 0px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dragover {
+  background-color: grey;
+}

@@ -1,7 +1,7 @@
 import Koa from 'koa';
 import koaSend, { SendOptions } from 'koa-send';
 import * as fs from 'fs';
-import { resolve, join } from 'path';
+import { resolve } from 'path';
 import { isUndefined } from 'lodash-es';
 import { injectHTML } from './inject';
 import type { KoaContext, YesContext } from './index';
@@ -48,28 +48,30 @@ export function serveStatic(serveDir: string): Koa.Middleware<Koa.DefaultState, 
     // response is already handled
     if (ctx.body != null || ctx.status !== 404) return // eslint-disable-line
 
-    if (ctx.request.path === '/') {
-      await send(ctx, 'index.html', {
-        root: resolve(serveDir),
-      });
-      return;
-    } else if (ctx.request.path === CLIENT_SCRIPT_URL) {
+    let resolvedPath = ctx.request.path;
+
+    if (resolvedPath === '/') {
+      resolvedPath = 'index.html';
+    }
+
+    if (resolvedPath === CLIENT_SCRIPT_URL) {
       await serveClientScript(ctx);
       return;
     }
 
     try {
-      await send(ctx, ctx.path, {
+      await send(ctx, resolvedPath, {
         root: resolve(serveDir),
       });
     } catch (err) {
-      const path = ctx.request.path;
-      const fullPath = ctx.serverContext.tryGetProduct(path);
+      const fullPath = ctx.serverContext.tryGetProduct(resolvedPath);
       if (isUndefined(fullPath)) {
         throw err
       }
 
-      await send(ctx, fullPath);
+      await send(ctx, fullPath, {
+        root: ctx.serverContext.buildDir,
+      });
     }
   }
 }

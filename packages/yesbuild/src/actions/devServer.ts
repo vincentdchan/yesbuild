@@ -1,18 +1,16 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { isUndefined, isString } from 'lodash-es';
+import { isUndefined, isArray } from 'lodash-es';
 import { ActionExecutor, mount, ExecutionContext } from './common';
 import { Stage } from '../flags';
 import { ActionResult } from '../registry';
 import { startServer, InternalServerOptions, ProductsMapping } from '../server';
-import { useBuildDir } from '../buildScript';
 import logger from '../logger';
 
 interface DevServerProps {
   host?: string,
   port?: number,
   productsMapping?: ProductsMapping,
-  watchTasks?: string[],
+  mapTasks: string[],
 }
 
 export class DevServer extends ActionExecutor<DevServerProps> {
@@ -36,12 +34,11 @@ export class DevServer extends ActionExecutor<DevServerProps> {
       if (exitCode !== 0) {
         process.exit(exitCode);
       }
-      const { host, port, productsMapping, watchTasks } = this.props;
+      const { host, port, mapTasks } = this.props;
       const options: InternalServerOptions = {
         host: host || '127.0.0.1',
         port: port || 3000,
-        productsMapping,
-        watchTasks,
+        mapTasks,
         buildDir,
       };
       startServer(taskDir, options);
@@ -55,52 +52,28 @@ mount(DevServer);
 export interface DevServerExportProps {
   host?: string,
   port?: number,
-  mapResults?: ActionResult[],
-}
-
-// only run in the task runner, or it will crahsh
-function createMappingByResult(results: ActionResult[]): ProductsMapping {
-  const mapping = Object.create(null);
-
-  for (const item of results) {
-    const relativeDir = item.taskDir || useBuildDir();
-    for (const product of item.products) {
-      const filePath = product.file;
-      let key = path.relative(relativeDir, filePath);
-      key = '/' + key;
-      mapping[key] = filePath;
-    }
-  }
-
-  return mapping;
+  mapTasks?: ActionResult[],
 }
 
 export function useDevServer(props: DevServerExportProps = {}): DevServer {
   let mapping: ProductsMapping | undefined = undefined;
-  let watchTasks: string[] | undefined = undefined;
+  const { port, host } = props;
 
-  if (!isUndefined(props.mapResults)) {
-    mapping = createMappingByResult(props.mapResults);
+  const mapTasks = [];
 
-    for (const item of props.mapResults) {
-      const { taskName } = item;
-      if (!isString(taskName)) {
+  if (isArray(props.mapTasks)) {
+    for (const task of props.mapTasks) {
+      if (isUndefined(task.taskName)) {
         continue;
       }
-
-      if (isUndefined(watchTasks)) {
-        watchTasks = [];
-      }
-
-      watchTasks.push(taskName);
+      mapTasks.push(task.taskName);
     }
   }
 
-  const { port, host } = props;
   const internalProps: DevServerProps = {
     port, host,
     productsMapping: mapping,
-    watchTasks,
+    mapTasks,
   }
   return new DevServer(internalProps);
 }

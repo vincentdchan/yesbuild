@@ -97,6 +97,8 @@ This example demonstrates how to compose tasks.
 
 You can use the result of a task as the input to another task.
 
+> You can run this example in `packages/yesbuild-visualizer/`
+
 ```typescript
 import yesbuild, { uesEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild';
 
@@ -110,17 +112,22 @@ yesbuild.defineTask('preview', () => uesEsBuild({
     splitting: true,
 }));
 
-// use the result of the preview task to start a dev server
-yesbuild.defineTask('serve', function* () {
+// copy static assets to the task directory,
+yesbuild.defineTask('assets', function*() {
   const taskDir = useTaskDir();
-  // copy static assets to the task directory,
-  yield useCopy('./assets/index.html', taskDir, {
+  yield useCopy('./assets/*', taskDir, {
     relative: './assets/'
   });
-  const result = yield useTask('preview');  // get the result of the preview task
+});
+
+// use the result of the preview task to start a dev server
+yesbuild.defineTask('serve', function* () {
+  // get the result of other tasks
+  const assets = yield useTask('assets');
+  const preview = yield useTask('preview');
   return useDevServer({
     port: 3000,
-    mapResults: [result],  // dev server will map resources to other tasks
+    mapResults: [assets, result],  // dev server will map the requests to other tasks
   });
 });
 ```
@@ -145,7 +152,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 
 | name | package name | Location |
 |------|--------------|----------|
-| useTypescript | `@yesbuild/typescript` | `packages/yesbuild-typescript` |
+| useTypescript | `@yesbuild/typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
 
 More and more actions will be added...
 

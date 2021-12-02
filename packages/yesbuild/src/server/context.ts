@@ -1,3 +1,5 @@
+import { join, relative } from 'path';
+import * as fs from 'fs';
 import type { WebSocket } from 'ws';
 
 export interface ProductsMapping {
@@ -8,13 +10,26 @@ export interface ProductsMapping {
 export class ServerContext {
 
   private __clientPools: Set<WebSocket> = new Set();
+  private __mappedDir: string[] = [];
 
   public constructor(
-    private productsMapping: ProductsMapping,
-  ) {}
+    public buildDir: string,
+    mapTasks: string[],
+  ) {
+    this.__mappedDir = mapTasks.map(taskName => join(buildDir, taskName));
+  }
 
-  public tryGetProduct(name: string) {
-    return this.productsMapping[name];
+  public tryGetProduct(name: string): string | undefined {
+    if (name[0] === '/') {
+      name = name.slice(1);
+    }
+    for (const dir of this.__mappedDir) {
+      const testFile = join(dir, name);
+      if (fs.existsSync(testFile)) {
+        return relative(this.buildDir, testFile);
+      }
+    }
+    return undefined;
   }
 
   public addClient(ws: WebSocket) {

@@ -4,18 +4,15 @@
   "version": "1.0.0",
   "scripts": {
     "build": "yesbuild -t preview",
-    "start": "yesbuild -t serve"
+    "start": "yesbuild -t serve",
+    "config": "yesbuild config"
   },
   "devDependencies": {
-    "@types/react": "^17.0.37",
-    "@types/react-dom": "^17.0.11",
+    "@types/js-yaml": "^4.0.5",
     "@yesbuild/typescript": "workspace:^1.0.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "force-graph": "^1.42.4",
+    "js-yaml": "^4.1.0",
+    "lodash-es": "^4.17.21",
     "yesbuild": "workspace:^1.0.0"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.7.0",
-    "@emotion/styled": "^11.6.0"
   }
 }

@@ -9,13 +9,17 @@ yesbuild.defineTask('preview', () => useEsBuild({
     splitting: true,
 }));
 
-yesbuild.defineTask('serve', function* () {
+yesbuild.defineTask('assets', function*() {
   const taskDir = useTaskDir();
-  yield useCopy('./assets/index.html', taskDir, {
+  yield useCopy('./assets/*', taskDir, {
     relative: './assets/'
   });
-  const result = yield useTask('preview');
+});
+
+yesbuild.defineTask('serve', function* () {
+  const assets = yield useTask('assets');
+  const preview = yield useTask('preview');
   return useDevServer({
-    mapResults: [result],
+    mapTasks: [assets, preview],
   });
 });
