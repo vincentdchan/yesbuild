@@ -1,4 +1,4 @@
-import yesbuild, { useEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild';
+import yesbuild, { useEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild-core';
 
 yesbuild.defineTask('preview', () => useEsBuild({
     entryPoints: ['./src/index.tsx'],

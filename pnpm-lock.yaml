@@ -1,21 +1,21 @@
 lockfileVersion: 5.3
 
 overrides:
-  yesbuild: workspace:*
+  yesbuild-core: workspace:*
 
 importers:
 
   .:
     specifiers:
-      '@yesbuild/typescript': workspace:^1.0.0
       chokidar: ^3.5.2
       esbuild: ^0.13.15
-      yesbuild: workspace:*
+      yesbuild-core: workspace:*
+      yesbuild-typescript: workspace:^0.1.0
     dependencies:
-      '@yesbuild/typescript': link:packages/yesbuild-typescript
       chokidar: 3.5.2
       esbuild: 0.13.15
-      yesbuild: link:packages/yesbuild
+      yesbuild-core: link:packages/yesbuild
+      yesbuild-typescript: link:packages/yesbuild-typescript
 
   packages/yesbuild:
     specifiers:
@@ -63,29 +63,29 @@ importers:
       lodash-es: ^4.17.21
       tsconfig: ^7.0.0
       typescript: ^4.5.2
-      yesbuild: workspace:*
+      yesbuild-core: workspace:*
     dependencies:
       tsconfig: 7.0.0
       typescript: 4.5.2
-      yesbuild: link:../yesbuild
+      yesbuild-core: link:../yesbuild
     devDependencies:
       lodash-es: 4.17.21
 
   packages/yesbuild-visualizer:
     specifiers:
       '@types/js-yaml': ^4.0.5
-      '@yesbuild/typescript': workspace:^1.0.0
       force-graph: ^1.42.4
       js-yaml: ^4.1.0
       lodash-es: ^4.17.21
-      yesbuild: workspace:*
+      yesbuild-core: workspace:*
+      yesbuild-typescript: workspace:^0.1.0
     devDependencies:
       '@types/js-yaml': 4.0.5
-      '@yesbuild/typescript': link:../yesbuild-typescript
       force-graph: 1.42.4
       js-yaml: 4.1.0
       lodash-es: 4.17.21
-      yesbuild: link:../yesbuild
+      yesbuild-core: link:../yesbuild
+      yesbuild-typescript: link:../yesbuild-typescript
 
 packages:
 

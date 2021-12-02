@@ -1,5 +1,5 @@
-import yesbuild, { useCopy, useTask } from 'yesbuild';
-import { useTypeScript } from '@yesbuild/typescript';
+import yesbuild, { useCopy, useTask } from 'yesbuild-core';
+import { useTypeScript } from 'yesbuild-typescript';
 
 yesbuild.defineTask('coreType', function*() {
   yield useTypeScript({

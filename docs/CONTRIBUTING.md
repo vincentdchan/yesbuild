@@ -54,7 +54,7 @@ an executor.
 
 ```typescript
 
-import { ActionExecutor, mount } from 'yesbuild';
+import { ActionExecutor, mount } from 'yesbuild-core';
 
 // defined yout own input, which will be persistent
 export interface CopyExecutorProps {

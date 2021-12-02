@@ -15,7 +15,7 @@ client: packages/yesbuild/client/index.ts
 	cp dist/client.js packages/yesbuild/dist/client.js
 
 ts-plugin:
-	$(ESBUILD) --bundle packages/yesbuild-typescript/index.ts --outfile=dist/yesbuild-typescript.js --platform=node --external:yesbuild --external:typescript --external:tsconfig --sourcemap
+	$(ESBUILD) --bundle packages/yesbuild-typescript/index.ts --outfile=dist/yesbuild-typescript.js --platform=node --external:yesbuild-core --external:typescript --external:tsconfig --sourcemap
 	mkdir -p packages/yesbuild-typescript/dist
 	cp dist/yesbuild-typescript.js packages/yesbuild-typescript/dist/index.js
 	cp dist/yesbuild-typescript.js.map packages/yesbuild-typescript/dist/index.js.map

@@ -1,6 +1,6 @@
 {
-  "name": "yesbuild",
-  "version": "1.0.0",
+  "name": "yesbuild-core",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Vincent Chan <okcdz@diverse.space>",
@@ -11,6 +11,12 @@
   "bin": {
     "yesbuild": "./bin/yesbuild.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincentdchan/yesbuild.git",
+    "directory": "packages/yesbuild"
+  },
+  "homepage": "https://github.com/vincentdchan/yesbuild",
   "dependencies": {
     "chokidar": "^3.5.2",
     "esbuild": "^0.13.15",

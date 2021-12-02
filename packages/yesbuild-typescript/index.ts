@@ -1,4 +1,4 @@
-import { ActionExecutor, mount, ExecutionContext } from 'yesbuild';
+import { ActionExecutor, mount, ExecutionContext } from 'yesbuild-core';
 import { isUndefined } from 'lodash-es';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -35,7 +35,7 @@ function cleanFilesInDir(dir: string) {
 
 export class TypeScriptExecutor extends ActionExecutor<TypeScriptBuildOptions> {
 
-  public static actionName: string = '@yesbuild/typescript'
+  public static actionName: string = 'yesbuild-typescript'
   private __program: TsType.Program;
   private __config: any;
 

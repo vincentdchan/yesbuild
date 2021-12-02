@@ -1,12 +1,18 @@
 {
-  "name": "@yesbuild/typescript",
-  "version": "1.0.0",
+  "name": "yesbuild-typescript",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincentdchan/yesbuild.git",
+    "directory": "packages/yesbuild-typescript"
+  },
+  "homepage": "https://github.com/vincentdchan/yesbuild",
   "dependencies": {
     "tsconfig": "^7.0.0",
     "typescript": "^4.5.2",
-    "yesbuild": "workspace:^1.0.0"
+    "yesbuild-core": "workspace:^0.1.0"
   },
   "devDependencies": {
     "lodash-es": "^4.17.21"

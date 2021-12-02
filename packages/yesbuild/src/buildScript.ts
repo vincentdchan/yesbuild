@@ -70,8 +70,8 @@ async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder):
     plugins: [],
     external: [
       'esbuild',
-      'yesbuild',
-      '@yesbuild/typescript',
+      'yesbuild-core',
+      'yesbuild-typescript',
       './dist'
     ],
   };

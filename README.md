@@ -39,19 +39,19 @@ compose things.
 ### Globally
 
 ```sh
-npm install -g yesbuild
+npm install -g yesbuild-core
 ```
 
 ### Scoped
 
 ```sh
-yarn install yesbuild
+yarn install yesbuild-core
 ```
 
 or
 
 ```sh
-pnpm i yesbuild
+pnpm i yesbuild-core
 ```
 
 ## Usage
@@ -63,7 +63,7 @@ Make a new file named `yesbuild.config.js` in your project directory.
 Define a task:
 
 ```typescript
-import yesbuild, { useEsBuild } from 'yesbuild';
+import yesbuild, { useEsBuild } from 'yesbuild-core';
 
 yesbuild.defineTask('preview', () => useEsBuild({
     entryPoints: ['./src/index.tsx'],
@@ -100,7 +100,7 @@ You can use the result of a task as the input to another task.
 > You can run this example in `packages/yesbuild-visualizer/`
 
 ```typescript
-import yesbuild, { uesEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild';
+import yesbuild, { uesEsBuild, useCopy, useTask, useTaskDir, useDevServer } from 'yesbuild-core';
 
 // define a task for the preview assets
 yesbuild.defineTask('preview', () => uesEsBuild({
@@ -152,7 +152,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 
 | name | package name | Location |
 |------|--------------|----------|
-| useTypescript | `@yesbuild/typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
+| useTypescript | `yesbuild-typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
 
 More and more actions will be added...
 
