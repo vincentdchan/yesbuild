@@ -189,13 +189,18 @@ class TaskManager {
     this.__metaDeps = objs.deps;
   }
 
-  public async dumpFiles(ignoreMeta?: boolean): Promise<any> {
+  public async dumpFiles(taskNames?: string[], ignoreMeta?: boolean): Promise<any> {
     if (!ignoreMeta) {
       await this.__dumpMetaFiles();
     }
 
+    if (isUndefined(taskNames)) {
+      taskNames = [...this.__tasks.keys()];
+    }
+
     const promises: Promise<any>[] = [];
-    for (const [taskName, task] of this.__tasks) {
+    for (const taskName of taskNames) {
+      const task = this.__tasks.get(taskName);
       promises.push(this.__dumpFile(taskName, task));
     }
 

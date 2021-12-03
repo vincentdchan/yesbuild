@@ -1,5 +1,9 @@
 
+[![npm version](https://img.shields.io/npm/v/yesbuild-core.svg)](https://www.npmjs.com/package/yesbuild-core)
+
 # Yesbuild
+
+[中文版](./README_CN.md)
 
 A scable and extensible build system for the Web ecosystem.
 
@@ -141,7 +145,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 
 ## Internal actions
 
-| name | description |
+| Name | Description |
 |------|------------|
 | useEsBuild | [esbuild](https://github.com/evanw/esbuild/) |
 | useCopy | Copy files |
@@ -150,7 +154,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 
 ## External actions
 
-| name | package name | Location |
+| Name | Package name | Location |
 |------|--------------|----------|
 | useTypescript | `yesbuild-typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
 

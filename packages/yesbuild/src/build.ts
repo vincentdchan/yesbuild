@@ -38,11 +38,9 @@ export async function build(options: BuildOptions) {
 
   // needs to know if dependencies changed
   // re-write the yml files if changed
-  const dependenciesChangedCell: DependenciesChangedCell = {
-    changed: false,
-  };
+  const changedTasks: Set<string> = new Set();
   if (taskName === '*') {
-    await runAllTasks(graph, buildDir, flags, dependenciesChangedCell);
+    await runAllTasks(graph, buildDir, flags, changedTasks);
   } else {
     const tasksToRun = graph.checkDependenciesUpdated(taskName, Boolean(flags & FLAGS_FORCE_UPDATE));
     if (tasksToRun.length === 0) {
@@ -55,15 +53,15 @@ export async function build(options: BuildOptions) {
         logger.panic(`Task ${red(taskName)} not found!`);
         return;
       }
-      const outputs = await __runTask(task, taskName, taskOptions, dependenciesChangedCell);
+      const outputs = await __runTask(task, taskName, taskOptions, changedTasks);
       for (const o of outputs) {
         logger.addOutput(o);
       }
     }
   }
 
-  if (dependenciesChangedCell.changed) {
-    await graph.dumpFiles();
+  if (changedTasks.size > 0) {
+    await graph.dumpFiles([...changedTasks]);
   }
 }
 
@@ -72,7 +70,7 @@ export interface RunTaskOptions {
   workDir: string;
 }
 
-export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: number, changedCell?: DependenciesChangedCell) {
+export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: number, changedTasks?: Set<string>) {
   const orderedTasks: string[] = graph.checkDependenciesUpdated('*', Boolean(flags & FLAGS_FORCE_UPDATE));
   for (const taskName of orderedTasks) {
     const task = graph.loadTask(taskName);
@@ -80,23 +78,23 @@ export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: nu
       flags,
       workDir: buildDir,
     };
-    const outputs = await __runTask(task, taskName, options, changedCell);
+    const outputs = await __runTask(task, taskName, options, changedTasks);
     for (const o of outputs) {
       logger.addOutput(o);
     }
   }
 }
 
-function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedCell?: DependenciesChangedCell): Promise<ProductWithSize[]> {
+function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedTasks?: Set<string>): Promise<ProductWithSize[]> {
   logger.plusTaskCounter();
   logger.printIfReadable(`Running task: ${green(taskName)}`);
 
   const { workDir: buildDir, flags } = options;
 
-  return rebuild(taskName, task, buildDir, flags, changedCell);
+  return rebuild(taskName, task, buildDir, flags, changedTasks);
 }
 
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedCell?: DependenciesChangedCell): Promise<ProductWithSize[]> {
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedTasks?: Set<string>): Promise<ProductWithSize[]> {
   const depsBuilder = new DependencyBuilder(); 
   const outputBuilder = new ProductBuilder();
   buildDir = resolve(buildDir);
@@ -116,8 +114,8 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
   const { deps: previousDeps } = taskNode;
   if (!Deps.equals(previousDeps, newDeps)) {
     taskNode.deps = newDeps;
-    if (changedCell) {
-      changedCell.changed = true;
+    if (changedTasks) {
+      changedTasks.add(taskName);
     }
   }
 
