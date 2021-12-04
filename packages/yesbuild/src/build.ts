@@ -129,7 +129,7 @@ export async function runActionOfTask(ctx: ExecutionContext, taskName: string, r
   const { name, props } = rawAction;
   let actionCtor = getAction(name);
   if (!actionCtor) {
-    await import(name);  // load the plugins
+    require(name);  // load the plugins
   }
   actionCtor = getAction(name);
   if (!actionCtor) {

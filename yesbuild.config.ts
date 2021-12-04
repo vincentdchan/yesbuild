@@ -1,4 +1,4 @@
-import yesbuild, { useCopy, useTask } from 'yesbuild-core';
+import yesbuild, { useCopy, useTask, useEsBuild } from 'yesbuild-core';
 import { useTypeScript } from 'yesbuild-typescript';
 
 yesbuild.defineTask('coreType', function*() {
@@ -31,6 +31,41 @@ yesbuild.defineTask('tsPluginType', function*() {
     './build/tsPluginType/**',
     './packages/yesbuild-typescript/dist',
     { relative: './build/tsPluginType/' });
+});
+
+yesbuild.defineTask('solidJsPluginType', function*() {
+  yield useTypeScript({
+    rootNames: [
+      'packages/yesbuild-solidjs/src/index.ts',
+    ],
+    compilerOptions: {
+      'declaration': true,
+      'emitDeclarationOnly': true,
+    },
+  });
+  yield useCopy(
+    './build/solidJsPluginType/**',
+    './packages/yesbuild-solidjs/dist',
+    { relative: './build/solidJsPluginType/' });
+});
+
+yesbuild.defineTask('solidJsPlugin', function* () {
+  yield useEsBuild({
+    entryPoints: ['./packages/yesbuild-solidjs/src/index.ts'],
+    platform: 'node',
+    bundle: true,
+    sourcemap: true,
+    external: [
+      'yesbuild-core',
+      '@babel/core',
+      '@babel/preset-typescript',
+      'babel-preset-solid',
+    ],
+  });
+  yield useCopy(
+    './build/solidJsPlugin/**',
+    './packages/yesbuild-solidjs/dist',
+    { relative: './build/solidJsPlugin/' });
 });
 
 yesbuild.defineTask('default', function*() {

@@ -469,6 +469,7 @@ export class BuildGraph extends TaskManager {
       }
       return;
     }
+    // task.deps is Array
     for (const depLiteral of task.deps) {
       if (this.__tryCollectFileDep(collector, taskName, depLiteral)) {
         continue;

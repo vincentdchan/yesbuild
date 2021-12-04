@@ -267,7 +267,7 @@ class ScriptTaskRunner {
     if (next.done) {
       this.finalize();
     } else {
-      this.__testActionExecutorGenerator(generator);
+      await this.__testActionExecutorGenerator(generator);
     }
   }
 

@@ -1,0 +1,25 @@
+{
+  "name": "yesbuild-solidjs",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincentdchan/yesbuild.git",
+    "directory": "packages/yesbuild-solidjs"
+  },
+  "homepage": "https://github.com/vincentdchan/yesbuild",
+  "dependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-typescript": "^7.16.0",
+    "babel-preset-solid": "^1.2.5",
+    "yesbuild-core": "workspace:^0.1.0"
+  },
+  "devDependencies": {
+    "fast-glob": "^3.2.7",
+    "i": "^0.3.7",
+    "lodash-es": "^4.17.21",
+    "merge-anything": "^4.0.2",
+    "npm": "^8.2.0"
+  }
+}
