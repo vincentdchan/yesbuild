@@ -5,7 +5,7 @@ all: clean core client ts-plugin bootstrap
 	echo "Done!"
 
 core:
-	$(ESBUILD) --bundle packages/yesbuild/src/index.ts --outfile=dist/index.js --platform=node --external:chokidar --external:esbuild --external:node-html-parser --sourcemap
+	$(ESBUILD) --bundle packages/yesbuild/src/index.ts --minify --outfile=dist/index.js --platform=node --external:chokidar --external:esbuild --external:node-html-parser --sourcemap
 	mkdir -p packages/yesbuild/dist
 	cp dist/index.js packages/yesbuild/dist/index.js
 	cp dist/index.js.map packages/yesbuild/dist/index.js.map

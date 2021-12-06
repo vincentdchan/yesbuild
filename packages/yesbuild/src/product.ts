@@ -9,6 +9,8 @@ export type ProductsWithSize = ProductWithSize[];
 
 export class ProductBuilder {
 
+  public enabled: boolean = true;
+
   #currentDir: string;
   #outputs: ProductsWithSize = [];
 

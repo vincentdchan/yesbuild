@@ -103,10 +103,6 @@ export class DependencyBuilder {
 
 }
 
-export interface DependenciesChangedCell {
-  changed: boolean;
-}
-
 function dependenciesArrayEquals(d1: string[], d2: string[]): boolean {
   if (d1.length !== d2.length) {
     return false;

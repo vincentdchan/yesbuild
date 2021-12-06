@@ -2,7 +2,7 @@ import { join, resolve } from 'path';
 import { green, red, cyan } from 'chalk';
 import { isUndefined } from 'lodash-es';
 import configure, { ConfigOptions } from './configure';
-import { Deps, DependenciesChangedCell, DependencyBuilder } from './dependency';
+import { Deps, DependencyBuilder } from './dependency';
 import { TaskNode, BuildGraph, ActionStore } from './buildGraph';
 import { getAction, ExecutionContext } from './actions';
 import { FLAGS_STAGE_MASK, FLAGS_FORCE_UPDATE, FLAGS_IGNORE_META } from './flags';
@@ -42,7 +42,7 @@ export async function build(options: BuildOptions) {
   if (taskName === '*') {
     await runAllTasks(graph, buildDir, flags, changedTasks);
   } else {
-    const tasksToRun = graph.checkDependenciesUpdated(taskName, Boolean(flags & FLAGS_FORCE_UPDATE));
+    const { taskNamesToExecute: tasksToRun, changedFiles } = graph.checkDependenciesUpdated(taskName, Boolean(flags & FLAGS_FORCE_UPDATE));
     if (tasksToRun.length === 0) {
       return;
     }
@@ -53,7 +53,7 @@ export async function build(options: BuildOptions) {
         logger.panic(`Task ${red(taskName)} not found!`);
         return;
       }
-      const outputs = await __runTask(task, taskName, taskOptions, changedTasks);
+      const outputs = await __runTask(task, taskName, taskOptions, changedTasks, changedFiles);
       for (const o of outputs) {
         logger.addOutput(o);
       }
@@ -71,7 +71,7 @@ export interface RunTaskOptions {
 }
 
 export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: number, changedTasks?: Set<string>) {
-  const orderedTasks: string[] = graph.checkDependenciesUpdated('*', Boolean(flags & FLAGS_FORCE_UPDATE));
+  const { taskNamesToExecute: orderedTasks } = graph.checkDependenciesUpdated('*', Boolean(flags & FLAGS_FORCE_UPDATE));
   for (const taskName of orderedTasks) {
     const task = graph.loadTask(taskName);
     const options: RunTaskOptions = {
@@ -85,16 +85,16 @@ export async function runAllTasks(graph: BuildGraph, buildDir: string, flags: nu
   }
 }
 
-function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedTasks?: Set<string>): Promise<ProductWithSize[]> {
+function __runTask(task: TaskNode, taskName: string, options: RunTaskOptions, changedTasks?: Set<string>, changedFiles?: string[]): Promise<ProductWithSize[]> {
   logger.plusTaskCounter();
   logger.printIfReadable(`Running task: ${green(taskName)}`);
 
   const { workDir: buildDir, flags } = options;
 
-  return rebuild(taskName, task, buildDir, flags, changedTasks);
+  return rebuild(taskName, task, buildDir, flags, changedTasks, changedFiles);
 }
 
-async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedTasks?: Set<string>): Promise<ProductWithSize[]> {
+async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, flags: number, changedTasks?: Set<string>, changedFiles?: string[]): Promise<ProductWithSize[]> {
   const depsBuilder = new DependencyBuilder(); 
   const outputBuilder = new ProductBuilder();
   buildDir = resolve(buildDir);
@@ -106,6 +106,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
       productsBuilder: outputBuilder,
       taskDir: join(buildDir, taskName),
       forceUpdate: Boolean(flags & FLAGS_FORCE_UPDATE),
+      changedFiles,
     };
     await runActionOfTask(executeContext, taskName, actionStore);
   }
@@ -120,7 +121,11 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
   }
 
   const result = outputBuilder.finalize();
-  taskNode.products = result.map(output => output.file);
+
+  // only update the graph if outputBuilder is enabled
+  if (outputBuilder.enabled) {
+    taskNode.products = result.map(output => output.file);
+  }
 
   return result;
 }

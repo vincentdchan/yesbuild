@@ -29,6 +29,11 @@ export interface TaskNode {
   deps?: Dependencies;
 }
 
+export interface DependenciesUpdatedResult {
+  taskNamesToExecute: string[],
+  changedFiles?: string[],
+}
+
 export function makeTaskNode(): TaskNode {
   return {
     actions: [],
@@ -92,25 +97,51 @@ class DependenciesCollector {
 
 }
 
-function findLatestTimeOfOutput(outputs: string[]): [string, number] | '*' | undefined {
-  if (outputs.length === 0) {
-    return undefined;
+type OutputMeta = [string, number] | '*' | null;
+
+/**
+ * Cached result to reduced IO
+ */
+class OutputMetaFetcher {
+
+  private __cache: Map<string, number | null> = new Map();
+
+  public findLatestTimeOfOutput(outputs: string[]): [string, number] | '*' | null {
+    if (outputs.length === 0) {
+      return null;
+    }
+
+    const times: [string, number][] = [];
+
+    for (const output of outputs) {
+      let tmp = this.__cache.get(output);
+      if (isUndefined(tmp)) {
+        tmp = this.__getOutputMetaAndCache(output);
+      }
+      if (tmp === null) {
+        return '*';
+      }
+      times.push([output, tmp]);
+    }
+
+    return maxBy(times, ([, time]) => time);
   }
 
-  const times: [string, number][] = [];
-
-  for (const output of outputs) {
+  private __getOutputMetaAndCache(output: string): number | null {
+    let result: number | null = null;
     try {
       const stat = fs.statSync(output);
       const { mtimeMs } = stat;
-      times.push([output, mtimeMs]);
+      result = mtimeMs;
     } catch (err) {
-      return '*';
+      result = null;
     }
+    this.__cache.set(output, result);
+    return result;
   }
 
-  return maxBy(times, ([, time]) => time);
 }
+
 
 // load task on demand
 class TaskManager {
@@ -275,9 +306,10 @@ export class BuildGraph extends TaskManager {
       files.push(testResult);
     }
 
-    const findResult = findLatestTimeOfOutput(files);
+    const cachedOutputFetcher = new OutputMetaFetcher();
+    const findResult = cachedOutputFetcher.findLatestTimeOfOutput(files);
 
-    if (isUndefined(findResult)) {
+    if (!findResult) {
       return undefined;
     }
 
@@ -296,8 +328,9 @@ export class BuildGraph extends TaskManager {
    * Track dependencies from an entry task,
    * telling yesbuild what tasks to rebuild.
    */
-  public checkDependenciesUpdated(entry: string, forceUpdate: boolean = false): string[] {
+  public checkDependenciesUpdated(entry: string, forceUpdate: boolean = false): DependenciesUpdatedResult {
     const collector = new DependenciesCollector();
+    let changedFiles: string[] | undefined = undefined;
     if (entry === '*') {
       const taskNames = this.getAllTasknames();
       collector.addTaskNamesToUpdate(taskNames);
@@ -307,13 +340,14 @@ export class BuildGraph extends TaskManager {
       if (forceUpdate) {
         this.__addAllSubTasks(collector, entry);
       } else {
-        this.__checkFilesDeps(collector);
+        changedFiles = this.__checkFilesDeps(collector);
       }
     }
-    return this.__computeExecutionOrderOfTasks(
+    const taskNamesToExecute = this.__computeExecutionOrderOfTasks(
       collector.taskNamesToUpdate,
       collector.taskDeps
     );
+    return { taskNamesToExecute, changedFiles };
   }
 
   public collectAllFilesDeps(entry: string): string[] {
@@ -405,21 +439,27 @@ export class BuildGraph extends TaskManager {
     return result;
   }
 
-  private __checkFilesDeps(collector: DependenciesCollector) {
+  private __checkFilesDeps(collector: DependenciesCollector): string[] {
+    const fileDeps: string[] = [];;
+    const outputMetaFetcher = new OutputMetaFetcher();
     for (const [filename, taskNames] of collector.fileDeps) {
-      this.__checkFileDeps(collector, filename, taskNames);
+      const tmp = this.__checkFileDeps(collector, outputMetaFetcher, filename, taskNames);
+      if (tmp) {
+        fileDeps.push(filename);
+      }
     }
+    return fileDeps;
   }
 
-  private __checkFileDeps(collector: DependenciesCollector, filename: string, taskNames: string[]) {
+  private __checkFileDeps(collector: DependenciesCollector, metaFetcher: OutputMetaFetcher, filename: string, taskNames: string[]): boolean {
     const outputs = this.__getAllOutputsOfTaskNames(taskNames);
-    const findResult = findLatestTimeOfOutput(outputs);
-    if (isUndefined(findResult)) {
-      return;
+    const findResult = metaFetcher.findLatestTimeOfOutput(outputs);
+    if (!findResult) {
+      return false;
     }
     if (findResult === '*') {
       collector.addTaskNamesToUpdate(taskNames);
-      return;
+      return true;
     }
     const [, latestTime] = findResult;
     let changed: boolean = false;
@@ -436,6 +476,8 @@ export class BuildGraph extends TaskManager {
     if (changed) {
       collector.addTaskNamesToUpdate(taskNames);
     }
+
+    return changed;
   }
 
   private __getAllOutputsOfTaskNames(taskNames: string[]): string[] {

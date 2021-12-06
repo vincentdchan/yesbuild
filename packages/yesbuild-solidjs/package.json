@@ -16,6 +16,7 @@
     "yesbuild-core": "workspace:^0.1.0"
   },
   "devDependencies": {
+    "chalk": "^4.1.2",
     "fast-glob": "^3.2.7",
     "i": "^0.3.7",
     "lodash-es": "^4.17.21",

@@ -63,6 +63,7 @@ importers:
       '@babel/core': ^7.16.0
       '@babel/preset-typescript': ^7.16.0
       babel-preset-solid: ^1.2.5
+      chalk: ^4.1.2
       fast-glob: ^3.2.7
       i: ^0.3.7
       lodash-es: ^4.17.21
@@ -75,6 +76,7 @@ importers:
       babel-preset-solid: 1.2.5_@babel+core@7.16.0
       yesbuild-core: link:../yesbuild
     devDependencies:
+      chalk: 4.1.2
       fast-glob: 3.2.7
       i: 0.3.7
       lodash-es: 4.17.21

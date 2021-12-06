@@ -9,6 +9,7 @@ export interface ExecutionContext {
   buildDir: string,
 	taskDir: string,
   forceUpdate: boolean,
+  changedFiles?: string[],
 }
 
 /**
