@@ -13,7 +13,7 @@
     "@babel/core": "^7.16.0",
     "@babel/preset-typescript": "^7.16.0",
     "babel-preset-solid": "^1.2.5",
-    "yesbuild-core": "workspace:^0.1.0"
+    "yesbuild-core": "workspace:^0.1.2"
   },
   "devDependencies": {
     "chalk": "^4.1.2",
