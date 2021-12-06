@@ -132,6 +132,24 @@ export const Deps = {
     }
 
     return false;
-  }
+  },
+
+  /**
+   * Preserve the elder `tasks://` dependencies,
+   * Because it can only be generated in user's script.
+   */
+  merge(oldDeps: Dependencies, newDeps: Dependencies): Dependencies {
+    if (oldDeps === '*' || newDeps === '*') {
+      return '*';
+    }
+    if (oldDeps === undefined) {
+      return newDeps;
+    }
+    if (newDeps === undefined) {
+      return oldDeps;
+    }
+    const oldTasks = oldDeps.filter(literal => literal.startsWith('task://'));
+    return [...oldTasks, ...newDeps].sort();
+  },
 
 }

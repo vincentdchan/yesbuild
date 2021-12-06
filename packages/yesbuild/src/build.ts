@@ -115,7 +115,7 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
     const newDeps = depsBuilder.finalize();
     const { deps: previousDeps } = taskNode;
     if (!Deps.equals(previousDeps, newDeps)) {
-      taskNode.deps = newDeps;
+      taskNode.deps = Deps.merge(taskNode.deps, newDeps);
       if (changedTasks) {
         changedTasks.add(taskName);
       }
