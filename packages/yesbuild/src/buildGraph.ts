@@ -76,13 +76,13 @@ class DependenciesCollector {
   }
 
   public pushTaskDepForTask(taskName: string, content: string) {
-    let sources: string[] = this.taskDeps.get(content);
+    let sources: string[] = this.taskDeps.get(taskName);
     if (!sources) {
       sources = [];
       this.taskDeps.set(taskName, sources);
     }
 
-    sources.push(taskName);
+    sources.push(content);
   }
 
   public isTaskCollected(taskName: string): boolean {
@@ -96,8 +96,6 @@ class DependenciesCollector {
   }
 
 }
-
-type OutputMeta = [string, number] | '*' | null;
 
 /**
  * Cached result to reduced IO
@@ -430,11 +428,31 @@ export class BuildGraph extends TaskManager {
       }
 
       if (nextIteratesNode.length === lastIterLen) {
-        throw new Error(`Dead loop detection for tasks: ${iteratesNode.join(', ')}`);
+        throw new Error(`Dead loop detection for tasks: ${iteratesNode.join(', ')}, deps: ${BuildGraph.__prettyPrintTaskDeps(taskDeps)}`);
       }
       lastIterLen = nextIteratesNode.length;
       iteratesNode = nextIteratesNode;
     }
+
+    return result;
+  }
+
+  private static __prettyPrintTaskDeps(taskDeps: Map<string, string[]>): string {
+    let result = '{ ';
+    
+    let counter = 0;
+    for (const [key, value] of taskDeps) {
+      result += key;
+      result += ' => [',
+      result += value.join(', ');
+      result += ']';
+
+      if (counter++ < taskDeps.size - 1) {
+        result += ', ';
+      }
+    }
+
+    result += ' }';
 
     return result;
   }
@@ -541,6 +559,7 @@ export class BuildGraph extends TaskManager {
     if (isString(testResult)) {
       if (!collector.isTaskCollected(testResult)) {
         collector.pushTaskDepForTask(taskName, testResult);
+        collector.addTaskNamesToUpdate([testResult]);
         const task = this.loadTask(testResult);
         this.__collectTask(collector, testResult, task);
       }

@@ -111,12 +111,14 @@ async function rebuild(taskName: string, taskNode: TaskNode, buildDir: string, f
     await runActionOfTask(executeContext, taskName, actionStore);
   }
 
-  const newDeps = depsBuilder.finalize();
-  const { deps: previousDeps } = taskNode;
-  if (!Deps.equals(previousDeps, newDeps)) {
-    taskNode.deps = newDeps;
-    if (changedTasks) {
-      changedTasks.add(taskName);
+  if (depsBuilder.enabled) {
+    const newDeps = depsBuilder.finalize();
+    const { deps: previousDeps } = taskNode;
+    if (!Deps.equals(previousDeps, newDeps)) {
+      taskNode.deps = newDeps;
+      if (changedTasks) {
+        changedTasks.add(taskName);
+      }
     }
   }
 

@@ -44,10 +44,10 @@ const ALLOW_LOCKS = [
  */
 export class DependencyBuilder {
 
+  public enabled: boolean = true;
+
   #deps: Dependencies = undefined;
   #hasDepentLock: boolean = false;
-
-  public constructor() {}
 
   public addDep(literal: string) {
     if (this.#deps === '*') {

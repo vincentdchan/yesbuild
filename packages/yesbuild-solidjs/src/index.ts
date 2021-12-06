@@ -25,16 +25,22 @@ class SolidJSActionExecutor extends ActionExecutor<SolidJsProps> {
   }
 
   public async execute(ctx: ExecutionContext) {
-    if (isArray(ctx.changedFiles)) {
-      ctx.productsBuilder.enabled = false;  // disable products builder
-      await this.__compileFiles(ctx, ctx.changedFiles);
-      this.__prettyPrintChangedFiles(ctx.changedFiles);
-      return;
-    }
     const { files } = this.props;
     const matchFiles = fg.sync(files, {
       onlyFiles: true,
     });
+
+    if (isArray(ctx.changedFiles) && ctx.changedFiles.length > 0) {
+      const changedSet = new Set(ctx.changedFiles);
+      const solidChangedFiles = matchFiles
+        .map(path => path.startsWith('./') ? path.slice(2) : path)
+        .filter(file => changedSet.has(file)) // not all the changedFiles are for this task;
+      this.__prettyPrintChangedFiles(solidChangedFiles);
+      ctx.productsBuilder.enabled = false;  // disable products builder
+      ctx.depsBuilder.enabled = false;
+      await this.__compileFiles(ctx, solidChangedFiles);
+      return;
+    }
 
     return this.__compileFiles(ctx, matchFiles);
   }

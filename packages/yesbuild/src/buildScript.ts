@@ -72,6 +72,7 @@ async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder):
       'esbuild',
       'yesbuild-core',
       'yesbuild-typescript',
+      'yesbuild-solidjs',
       './dist'
     ],
   };

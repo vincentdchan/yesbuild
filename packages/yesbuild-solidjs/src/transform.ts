@@ -7,7 +7,9 @@ import * as path from 'path';
 
 // basically from https://github.com/solidjs/vite-plugin-solid/blob/master/src/index.ts
 async function transform(source, id, transformOptions) {
-  if (!/\.[jt]sx/.test(id)) return null;
+  if (!/\.[jt]sx/.test(id)) {
+    throw new Error(`${id} is not a valid source`);
+  }
 
   let solidOptions: { generate: 'ssr' | 'dom'; hydratable: boolean };
 
