@@ -559,7 +559,7 @@ export class BuildGraph extends TaskManager {
     if (isString(testResult)) {
       if (!collector.isTaskCollected(testResult)) {
         collector.pushTaskDepForTask(taskName, testResult);
-        collector.addTaskNamesToUpdate([testResult]);
+        // collector.addTaskNamesToUpdate([testResult]);
         const task = this.loadTask(testResult);
         this.__collectTask(collector, testResult, task);
       }
