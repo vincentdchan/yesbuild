@@ -6,7 +6,10 @@ import {
   build as esbuild,
   BuildOptions as EsBuildOptions,
   BuildResult as EsBuildResult,
+  Plugin as EsBuildPlugin,
+  PluginBuild as EsPluginBuild,
 } from 'esbuild';
+import { green } from 'chalk';
 import { DependencyBuilder, Dependencies } from './dependency';
 import { isUndefined, isFunction, isArray, isString } from 'lodash-es';
 import registry, { RegistryContext, ActionExecutorGenerator, ActionResult } from './registry';
@@ -54,6 +57,19 @@ function findBuildScriptPath(): string | undefined {
   return undefined;
 }
 
+function buildScriptPlugin(): EsBuildPlugin {
+  return {
+    name: 'yesbuild-user-script',
+    setup(build: EsPluginBuild) {
+
+      // https://github.com/evanw/esbuild/issues/619
+      const filter = /^[^.\/]|^\.[^.\/]|^\.\.[^\/]/ // Must not start with "/" or "./" or "../"
+      build.onResolve({ filter }, args => ({ path: args.path, external: true }));
+
+    },
+  };
+}
+
 async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder): Promise<string> {
   const outfile = entry + '.js';
   const collectDeps = !isUndefined(depBuilder);
@@ -67,7 +83,7 @@ async function bundleBuildScript(entry: string, depBuilder?: DependencyBuilder):
     sourcemap: 'inline',
     platform: 'node',
     metafile: true,
-    plugins: [],
+    plugins: [buildScriptPlugin()],
     external: [
       'esbuild',
       'yesbuild-core',
@@ -164,6 +180,8 @@ class ScriptTaskRunner {
     if (!task) {
       throw new Error(`Collecting depencencies failed: task '${this.taskName}' not found`);
     }
+
+    logger.printIfReadable(`Confiure ${green(this.taskName)}...`);
 
     // call the user method to collect deps
     const actionExecutor = task.userCallback();

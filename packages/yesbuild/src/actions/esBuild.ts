@@ -16,6 +16,7 @@ export interface EsBuildProps {
   outdir?: string,
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   external?: string[],
+  ignoreDeps?: boolean,
 }
 
 export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
@@ -58,10 +59,14 @@ export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
 
   buildGraphFromEsBuild(ctx: ExecutionContext, metafile: EsMetaFile) {
     const { outputs } = metafile;
+    const { ignoreDeps } = this.props;
     for (const key of Object.keys(outputs)) {
       const output = outputs[key];
       ctx.productsBuilder.push(key, output.bytes);
 
+      if (ignoreDeps) {
+        continue;
+      }
       for (const dep of Object.keys(output.inputs)) {
         ctx.depsBuilder.dependFile(dep);
       }
