@@ -157,6 +157,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 | Name | Package name | Location |
 |------|--------------|----------|
 | useTypescript | `yesbuild-typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
+| useSolidJS | `yesbuild-solidjs` | [packages/yesbuild-solidjs](./packages/yesbuild-solidjs) |
 
 More and more actions will be added...
 
