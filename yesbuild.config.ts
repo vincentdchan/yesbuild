@@ -1,4 +1,4 @@
-import yesbuild, { useCopy, useTask, useEsBuild } from 'yesbuild-core';
+import yesbuild, { useCopy, useTask, useEsBuild, useParallel } from 'yesbuild-core';
 import { useTypeScript } from 'yesbuild-typescript';
 
 yesbuild.defineTask('coreType', function*() {
@@ -72,4 +72,13 @@ yesbuild.defineTask('default', function*() {
   yield useTask('coreType');
   yield useTask('tsPluginType');
   yield useCopy('./README.md', './packages/yesbuild/');
+});
+
+yesbuild.defineTask('release', function*() {
+  yield useParallel([
+    'coreType',
+    'tsPluginType',
+    'solidJsPlugin',
+    'solidJsPluginType',
+  ]);
 });
