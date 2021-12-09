@@ -68,6 +68,39 @@ yesbuild.defineTask('solidJsPlugin', function* () {
     { relative: './build/solidJsPlugin/' });
 });
 
+yesbuild.defineTask('rollupPlugin', function*() {
+  yield useEsBuild({
+    entryPoints: ['./packages/yesbuild-rollup/index.ts'],
+    platform: 'node',
+    bundle: true,
+    sourcemap: true,
+    external: [
+      'yesbuild-core',
+      'rollup',
+    ],
+  });
+  yield useCopy(
+    './build/rollupPlugin/**',
+    './packages/yesbuild-rollup/dist',
+    { relative: './build/rollupPlugin/' });
+});
+
+yesbuild.defineTask('rollupPluginType', function*() {
+  yield useTypeScript({
+    rootNames: [
+      'packages/yesbuild-rollup/index.ts',
+    ],
+    compilerOptions: {
+      'declaration': true,
+      'emitDeclarationOnly': true,
+    },
+  });
+  yield useCopy(
+    './build/rollupPluginType/**',
+    './packages/yesbuild-rollup/dist',
+    { relative: './build/rollupPluginType/' });
+});
+
 yesbuild.defineTask('default', function*() {
   yield useTask('coreType');
   yield useTask('tsPluginType');
