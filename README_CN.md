@@ -146,6 +146,8 @@ Yesbuild 是不会重新进行构建的。
 | Name | Package name | Location |
 |------|--------------|----------|
 | useTypescript | `yesbuild-typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
+| useSolidJS | `yesbuild-solidjs` | [packages/yesbuild-solidjs](./packages/yesbuild-solidjs) |
+
 
 ## 写一个你自己的 Action
 

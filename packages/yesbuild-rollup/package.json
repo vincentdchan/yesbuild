@@ -1,0 +1,16 @@
+{
+  "name": "yesbuild-rollup",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincentdchan/yesbuild.git",
+    "directory": "packages/yesbuild-rollup"
+  },
+  "homepage": "https://github.com/vincentdchan/yesbuild",
+  "dependencies": {
+    "rollup": "^2.60.2",
+    "yesbuild-core": "workspace:^0.1.4"
+  }
+}

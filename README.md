@@ -11,6 +11,7 @@ A scable and extensible build system for the Web ecosystem.
 
 - Automatically dependencies tracing
 - Fast and incremental build *WITHOUT* resident process
+- Low memory usage for large project
 - Parallel
 - Simple syntaxes to config
 - Easy to compose
@@ -156,6 +157,7 @@ Check `build/yesbuild.preview.yml` and you will know what `yesbuild` has done fo
 
 | Name | Package name | Location |
 |------|--------------|----------|
+| useRollup | `yesbuild-rollup` | [packages/yesbuild-rollup](./packages/yesbuild-rollup) |
 | useTypescript | `yesbuild-typescript` | [packages/yesbuild-typescript](./packages/yesbuild-typescript) |
 | useSolidJS | `yesbuild-solidjs` | [packages/yesbuild-solidjs](./packages/yesbuild-solidjs) |
 
