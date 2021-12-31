@@ -17,6 +17,10 @@ export interface EsBuildProps {
   sourcemap?: boolean | 'inline' | 'external' | 'both';
   external?: string[],
   ignoreDeps?: boolean,
+  minify?: boolean,
+  minifyWhitespace?: boolean;
+  minifyIdentifiers?: boolean;
+  minifySyntax?: boolean;
 }
 
 export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
@@ -36,6 +40,10 @@ export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
       splitting,
       sourcemap,
       external,
+      minify,
+      minifyWhitespace,
+      minifyIdentifiers,
+      minifySyntax,
     } = this.props;
     const { taskDir } = ctx;
     const esBuildOptions: EsBuildOptions = {
@@ -46,6 +54,10 @@ export class EsbuildBundleExecutor extends ActionExecutor<EsBuildProps> {
       sourcemap,
       platform,
       external,
+      minify,
+      minifyWhitespace,
+      minifyIdentifiers,
+      minifySyntax,
       logLevel: 'error',
       outdir: taskDir,
       metafile: true,
