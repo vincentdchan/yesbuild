@@ -5,7 +5,9 @@ import {
   CopyExecutor,
   AnotherTask,
   DevServerExportProps,
-  useDevServer
+  useDevServer,
+  NodeProps,
+  Node
 } from './actions';
 
 export function useEsBuild(options: EsBuildProps): EsbuildBundleExecutor {
@@ -22,6 +24,10 @@ export function useCopy(files: string | string[], dest: string, options?: { rela
 
 export function useTask(taskName: string): AnotherTask {
   return new AnotherTask(taskName);
+}
+
+export function useNode(props: NodeProps) {
+  return new Node(props);
 }
 
 export { useTaskDir, useBuildDir } from './buildScript';

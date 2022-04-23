@@ -5,3 +5,4 @@ export * from './parallel';
 export * from './copy';
 export * from './anotherTask';
 export * from './devServer';
+export * from './node';
